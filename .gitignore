@@ -1,0 +1,5 @@
+automatedScripts/
+backups/
+logs/
+*.bak*
+*temp*
