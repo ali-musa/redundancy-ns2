@@ -16,19 +16,10 @@ failures=configurations[0].getElementsByTagName('failures')[0].childNodes[0].nod
 numFlows=configurations[0].getElementsByTagName('number_of_flows')[0].childNodes[0].nodeValue
 priQ=configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].nodeValue
 
-
-# exp_num=str(36)
-# log_dir=configurations[0].getElementsByTagName('log_dir')[0].childNodes[0].nodeValue
-# N=configurations[0].getElementsByTagName('number_of_servers')[0].childNodes[0].nodeValue
-# k=str(2)
-# load=str(100)
-# failures=configurations[0].getElementsByTagName('failures')[0].childNodes[0].nodeValue
-# numFlows=str(30000)
-# priQ=str(0)
-
-
-
-
+class FlowTime:
+	def __init__(self, time, label):
+		self.time = time
+		self.label = label
 
 #function definitions
 def calculateAfct(startList, endList):
@@ -49,15 +40,6 @@ def calculateAfct(startList, endList):
 	flowCompletionTimes = [x for x in flowCompletionTimes if x is not None]
 	afct = sum(flowCompletionTimes) / float(len(flowCompletionTimes))
 
-
-		
-	
-	# flowCompletionTimes =  [(x - y) for x, y in itertools.izip([endList[a][0] for a in xrange(len(endList))], [startList[b][0] for b in xrange(len(startList))])]
-	# # print flowCompletionTimes
-	# afct = 0.0
-	# for flowId in xrange(int(numFlows)):
-	# 	afct+=min(flowCompletionTimes[flowId::int(numFlows)])
-	# afct = afct/int(numFlows)
 	with open(log_dir+"exp"+exp_num+"/afct_"+k+"copies.csv", 'a') as csvfile:
 	   csvfile.write(load)
 	   csvfile.write(",")
@@ -68,27 +50,55 @@ def calculateAfct(startList, endList):
 	return afct
 
 
-def getOverlap(a, b):
-	return max(0, min(a[1], b[1]) - max(a[0], b[0]))
+# def getOverlap(a, b):
+# 	return max(0, min(a[1], b[1]) - max(a[0], b[0]))
 		
 def calculateTimeOverlap(startList, endList):
-	endTimes =  [endList[a][0] for a in xrange(len(endList))]
-	startTimes = [startList[b][0] for b in xrange(len(startList))]
-	# startServers = [startList[c][1] for c in xrange(len(startList))]
-	for primaryFlowId in xrange(int(numFlows)):
-		primaryServer = startList[primaryFlowId][1]
-		for flowId in xrange(len(startList)):
-			if ((flowId != primaryFlowId) and (startList[flowId][1] == primaryServer)): #server collision
-				print getOverlap([startList[primaryServer][0], endList[primaryServer][0]], [startList[flowId][0], endList[flowId][0]])
+	with open(log_dir+"exp"+exp_num+"/contention_"+k+"_"+load+".csv", 'w') as csvfile:
+		for server in xrange(1,int(N)+1):
+			flowTimes = []
+			for flowId in xrange(len(endList)):
+				if endList[flowId] is not None:
+					if endList[flowId][1] == server:
+						flowTimes.append(FlowTime(endList[flowId][0],"endTime"))
+						flowTimes.append(FlowTime(startList[flowId][0],"startTime")) #assumption is that flows will start and end at the same server and not switch
 
-	return
+		 	sortedFlowTimes = sorted(flowTimes, key=lambda x: x.time)
+		 	# print [x.time for x in sortedFlowTimes]
+		 	contention = [0]*len(sortedFlowTimes)
+		 	currContention = 0
+		 	for index in xrange(len(contention)):
+		 		if (sortedFlowTimes[index].label=="startTime"):
+		 			currContention+=1
+	 			elif (sortedFlowTimes[index].label=="endTime"):
+	 				currContention-=1
+ 				contention[index]=currContention
+			csvfile.write(str(server))
+			csvfile.write(",")
+			csvfile.write(str(contention))
+			csvfile.write(str([x.time for x in sortedFlowTimes]))
+			csvfile.write("\n")
+			
 
 
-	timeOverlap = 0
-	for flowId in xrange(int(numFlows)):
-		if flowId !=0:
-			if endTimes[flowId-1]>startTimes[flowId]:
-				timeOverlap+=endTimes[flowId-1]
+
+	# endTimes =  [endList[a][0] for a in xrange(len(endList))]
+	# startTimes = [startList[b][0] for b in xrange(len(startList))]
+	# # startServers = [startList[c][1] for c in xrange(len(startList))]
+	# for primaryFlowId in xrange(int(numFlows)):
+	# 	primaryServer = startList[primaryFlowId][1]
+	# 	for flowId in xrange(len(startList)):
+	# 		if ((flowId != primaryFlowId) and (startList[flowId][1] == primaryServer)): #server collision
+	# 			print getOverlap([startList[primaryServer][0], endList[primaryServer][0]], [startList[flowId][0], endList[flowId][0]])
+
+	# return
+
+
+	# timeOverlap = 0
+	# for flowId in xrange(int(numFlows)):
+	# 	if flowId !=0:
+	# 		if endTimes[flowId-1]>startTimes[flowId]:
+	# 			timeOverlap+=endTimes[flowId-1]
 
 
 #variable initializations
@@ -112,4 +122,4 @@ with open(endsFilename, "r") as f1:
 
 
 calculateAfct(flowStarts, flowEnds)
-# calculateTimeOverlap(flowStarts, flowEnds)
+calculateTimeOverlap(flowStarts, flowEnds)

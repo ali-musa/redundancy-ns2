@@ -3,3 +3,4 @@ backups/
 logs/
 *.bak*
 *temp*
+*~

@@ -224,27 +224,39 @@ proc generateFlow {src dst size priority } {
 
 
 proc generateFlows {flowsLeft priority} {
-	global ns arrival_ chunkSize traceStartTime starttracefile fileSize_ servers n0 N numFlows k startTimes randServer randServer2
+	global ns arrival_ chunkSize traceStartTime starttracefile fileSize_ servers n0 N numFlows k startTimes randServer randServer2 simulation_time
 
-	if {$flowsLeft >= 1} {
-		set primaryServerId -1
-		
+	set now [$ns now]	
+	if {($flowsLeft >= 1) && ($now<$simulation_time)} {
+		# set primaryServerId -1
+		set uniqueServerNotFound 1
+		array set serversUsed {}
 		for {set i 0} {$i < $k} {incr i} {
 			#TODO: Duplicates must not hit the same server!
 			#TODO?: make this generic for priorities
 			set curr_priority [expr $i*$numFlows+$priority]
-			set serverId -1
-			if {$i==0} {
-				#primary flow
-				set serverId [format "%-1.0f" [$randServer value]]
-				set primaryServerId $serverId
-			} else {
-				set serverId [format "%-1.0f" [$randServer2 value]]
-				#duplicate flow should not collide with the primary server
-				while {$serverId==$primaryServerId} {
-					set serverId [format "%-1.0f" [$randServer2 value]]				
+			while {$uniqueServerNotFound} {
+				
+				if {$i==0} {
+					#primary flow
+					set serverId [format "%-1.0f" [$randServer value]]
+					# set primaryServerId $serverId
+				} else {
+					set serverId [format "%-1.0f" [$randServer2 value]]
+					# #duplicate flow should not collide with the primary server
+					# while {$serverId==$primaryServerId||} {
+					# 	set serverId [format "%-1.0f" [$randServer2 value]]				
+					# }
+				}
+				set uniqueServerNotFound 0
+				for {set j 0} {$j < [array size serversUsed]} {incr j} {
+					if {$serversUsed($j)==$serverId} {
+						set uniqueServerNotFound 1
+						break
+					}
 				}
 			}
+
 			set now [$ns now]	
 			$ns at $now "generateFlow $servers($serverId) $n0 $chunkSize $curr_priority"
 			if ($traceStartTime) {
@@ -398,7 +410,8 @@ Agent/TCP instproc done {} {
 
 #Call the finish procedure after 5 seconds of simulation time
 
-$ns at $simulation_time "finish"
+#adding some extra time do let all the flows complete
+$ns at [expr $simulation_time+100] "finish"
 
 
 #Run the simulation
