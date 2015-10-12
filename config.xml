@@ -12,5 +12,5 @@
   <number_of_flows>1000</number_of_flows>
   <use_different_priorities>0</use_different_priorities>
   <chunk_size>64000000.0</chunk_size>
-  <link_bandwidth>100Mb</link_bandwidth>
+  <link_bandwidth>1000Mb</link_bandwidth>
 </config>
