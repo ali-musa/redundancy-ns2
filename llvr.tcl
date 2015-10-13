@@ -230,14 +230,15 @@ proc generateFlows {flowsLeft priority} {
 	#adding some extra time do let all the flows complete
 	if {($flowsLeft >= 1) && ($now< [expr $simulation_time-100])} {
 		# set primaryServerId -1
-		set uniqueServerNotFound 1
 		array set serversUsed {}
+
 		for {set i 0} {$i < $k} {incr i} {
 			#TODO: Duplicates must not hit the same server!
 			#TODO?: make this generic for priorities
+			set uniqueServerNotFound 1
 			set curr_priority [expr $i*$numFlows+$priority]
 			while {$uniqueServerNotFound} {
-				
+			
 				if {$i==0} {
 					#primary flow
 					set serverId [format "%-1.0f" [$randServer value]]
@@ -256,6 +257,12 @@ proc generateFlows {flowsLeft priority} {
 						break
 					}
 				}
+ 				
+				if {$uniqueServerNotFound==0} {
+					set serversUsed($i) $serverId	
+				}
+				# puts [array size serversUsed]
+				
 			}
 
 			set now [$ns now]	

@@ -1,5 +1,5 @@
 #set params
-loads="1 10 20 30 40 50"
+loads="10"
 copies="1 2"
 
 
