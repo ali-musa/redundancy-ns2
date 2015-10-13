@@ -227,16 +227,18 @@ proc generateFlows {flowsLeft priority} {
 	global ns arrival_ chunkSize traceStartTime starttracefile fileSize_ servers n0 N numFlows k startTimes randServer randServer2 simulation_time
 
 	set now [$ns now]	
-	if {($flowsLeft >= 1) && ($now<$simulation_time)} {
+	#adding some extra time do let all the flows complete
+	if {($flowsLeft >= 1) && ($now< [expr $simulation_time-100])} {
 		# set primaryServerId -1
-		set uniqueServerNotFound 1
 		array set serversUsed {}
+
 		for {set i 0} {$i < $k} {incr i} {
 			#TODO: Duplicates must not hit the same server!
 			#TODO?: make this generic for priorities
+			set uniqueServerNotFound 1
 			set curr_priority [expr $i*$numFlows+$priority]
 			while {$uniqueServerNotFound} {
-				
+			
 				if {$i==0} {
 					#primary flow
 					set serverId [format "%-1.0f" [$randServer value]]
@@ -255,6 +257,12 @@ proc generateFlows {flowsLeft priority} {
 						break
 					}
 				}
+ 				
+				if {$uniqueServerNotFound==0} {
+					set serversUsed($i) $serverId	
+				}
+				# puts [array size serversUsed]
+				
 			}
 
 			set now [$ns now]	
@@ -410,8 +418,7 @@ Agent/TCP instproc done {} {
 
 #Call the finish procedure after 5 seconds of simulation time
 
-#adding some extra time do let all the flows complete
-$ns at [expr $simulation_time+100] "finish"
+$ns at $simulation_time "finish"
 
 
 #Run the simulation
