@@ -228,7 +228,7 @@ proc generateFlows {flowsLeft priority} {
 
 	set now [$ns now]	
 	#adding some extra time do let all the flows complete
-	if {($flowsLeft >= 1) && ($now< [expr $simulation_time-100])} {
+	if {($flowsLeft >= 1) && ($now< [expr $simulation_time/3])} {
 		# set primaryServerId -1
 		array set serversUsed {}
 

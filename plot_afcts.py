@@ -1,6 +1,7 @@
-import pylab as pl
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pylab as pl
 from xml.dom import minidom
-
 
 #load configurations
 conf = minidom.parse('config.xml')
@@ -12,6 +13,7 @@ plot_dir=configurations[0].getElementsByTagName('plot_dir')[0].childNodes[0].nod
 max_copies=configurations[0].getElementsByTagName('copies')[0].childNodes[0].nodeValue
 
 #plot each copy on the same graph
+fig=pl.figure()
 for copy in xrange(1,int(max_copies)+1):
 	loads = []
 	afcts = []
@@ -25,8 +27,8 @@ for copy in xrange(1,int(max_copies)+1):
 pl.xlabel("percentage load")
 pl.ylabel("AFCTs")
 pl.grid(True)
-# pl.ylim([0,18])
+# pl.ylim([0,10])
 
 # show the plot on the screen
 # pl.show()
-pl.savefig(plot_dir+"exp"+exp_num+".png", bbox_inches='tight')
+fig.savefig(plot_dir+"exp"+exp_num+".png", bbox_inches='tight')

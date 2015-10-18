@@ -1,6 +1,6 @@
 #set params
-loads="10"
-copies="1 2"
+loads="95"
+copies="2"
 
 
 #read last experiment number

@@ -1,5 +1,6 @@
 automatedScripts/
 backups/
+plots/
 logs/
 *.bak*
 *temp*
