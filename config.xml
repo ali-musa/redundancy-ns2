@@ -3,8 +3,8 @@
   <experiment_number>208</experiment_number>
   <simulation_time>3000</simulation_time>
   <logging>1</logging>
-  <log_dir>/home/mosestufts/tarballs/ns-allinone-2.35/ns-2.35/src/redundancy/logs/</log_dir>
-  <plot_dir>/home/mosestufts/tarballs/ns-allinone-2.35/ns-2.35/src/redundancy/plots/</plot_dir>
+  <log_dir>/Users/musa/Projects/ns-allinone-2.35/ns-2.35/scripts/redundancy/logs/</log_dir>
+  <plot_dir>/Users/musa/Projects/ns-allinone-2.35/ns-2.35/scripts/redundancy/plots/</plot_dir>
   <number_of_servers>10</number_of_servers>
   <copies>2</copies>
   <percent_load>95</percent_load>

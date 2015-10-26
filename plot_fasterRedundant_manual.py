@@ -9,7 +9,7 @@ mainconfigurations = mainconf.getElementsByTagName('config')
 log_dir=mainconfigurations[0].getElementsByTagName('log_dir')[0].childNodes[0].nodeValue
 plot_dir=mainconfigurations[0].getElementsByTagName('plot_dir')[0].childNodes[0].nodeValue
 
-exp_nums=[202,204,206]
+exp_nums=[206]
 fig=pl.figure()
 for i in exp_nums:
 	print i
@@ -35,21 +35,14 @@ for i in exp_nums:
 
 	# for copy in xrange(1,int(max_copies)+1):
 	loads = []
-	afcts = []
-	with open(log_dir+"exp"+exp_num+"/afct_"+str(copy)+"copies.csv", 'r') as csvfile:
+	percentFaster = []
+	with open(log_dir+"exp"+exp_num+"/fasterRedundant_"+str(copy)+"copies_manual.csv", 'r') as csvfile:
 		for line in csvfile:
 			lineList = line.split(",")
 			loads.append(lineList[0])
-			afcts.append(lineList[1])
-	# pl.plot(loads, afcts, label=str(copy)+'-copies'+priQ_string,marker='x')
-	if(int(copy)==1):
-		lab = "single request"
-	else:
-		if int(priQ)==0:
-			lab = "duplicate request"
-		else:
-			lab = "duplicate request - with RANS"	
-	pl.plot(loads, afcts, label=lab,marker='x')
+			percentFaster.append(lineList[1])
+	# pl.plot(loads, percentFaster, label=str(copy)+'-copies'+priQ_string,marker='x')
+	pl.plot(loads, percentFaster, label="duplicate request - with RANS",marker='x')
 
 
 
@@ -113,13 +106,13 @@ lg = pl.legend(loc='best',
 lg.draw_frame(False)
 # pl.title("64MB chunks, 1Gbps links, 10 servers")	
 pl.xlabel("% load")
-pl.ylabel("avg. request completion time (s)")
+pl.ylabel("% redundant requests completing first")
 pl.grid(True)
 
 # pl.yscale('log')
-pl.xlim([0,50])
-pl.ylim([0.5,1.2])
+# pl.xlim([50,100])
+# pl.ylim([0,5])
 
 # show the plot on the screen
 # pl.show()
-fig.savefig(plot_dir+"/manual/exps"+str(exp_nums)+"_50below.png", bbox_inches='tight', dpi=1200, transparent=True)
+fig.savefig(plot_dir+"/manual/exps"+str(exp_nums)+"_faster.png", bbox_inches='tight', dpi=1200, transparent=True)
