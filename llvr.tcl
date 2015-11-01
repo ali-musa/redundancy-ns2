@@ -23,7 +23,9 @@ set numFlows [[$params selectNodes number_of_flows/text()] data]
 set priQ [[$params selectNodes use_different_priorities/text()] data]
 set chunkSize [[$params selectNodes chunk_size/text()] data]
 set linkBW [[$params selectNodes link_bandwidth/text()] data]
+set purging [[$params selectNodes purging/text()] data]
 
+array set ftp {}
 
 #TODO: fix failures
 #TODO: fix coded levels per cbq class
@@ -194,17 +196,15 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 
 		# $cbqlink bind $lowerClass7 60001 70000
 }
-
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
-	global ns
+	global ns numFlows ftp
 	
 	set tcp [new Agent/TCP]
 	$ns attach-agent $src $tcp
 
 	set sink [new Agent/TCPSink]
 	$ns attach-agent $dst $sink
-
 
 	$tcp set fid_ $priority
 	$sink set fid_ $priority
@@ -216,15 +216,16 @@ proc generateFlow {src dst size priority } {
 	$tcp set tcpTick_ 0.0001
 
 	#Setup a FTP over TCP connection
-	set ftp [new Application/FTP]
-	$ftp attach-agent $tcp
-	$ftp set type_ FTP
-	$ftp send $size
+	set ftp($priority) [new Application/FTP]
+	$ftp($priority) attach-agent $tcp
+	$ftp($priority) set type_ FTP
+	$ftp($priority) send $size;
 }
 
 
 proc generateFlows {flowsLeft priority} {
 	global ns arrival_ chunkSize traceStartTime starttracefile fileSize_ servers n0 N numFlows k startTimes randServer randServer2 simulation_time
+
 
 	set now [$ns now]	
 	#adding some extra time do let all the flows complete
@@ -241,10 +242,12 @@ proc generateFlows {flowsLeft priority} {
 			
 				if {$i==0} {
 					#primary flow
-					set serverId [format "%-1.0f" [$randServer value]]
+					##set serverId [format "%-1.0f" [$randServer value]];   ##OLD
+					set serverId [expr {int(rand()*$N) + 0}];		##NEW
 					# set primaryServerId $serverId
 				} else {
-					set serverId [format "%-1.0f" [$randServer2 value]]
+					##set serverId [format "%-1.0f" [$randServer2 value]];	##OLD
+					set serverId [expr {int(rand()*$N) + 0}];		##NEW
 					# #duplicate flow should not collide with the primary server
 					# while {$serverId==$primaryServerId||} {
 					# 	set serverId [format "%-1.0f" [$randServer2 value]]				
@@ -271,7 +274,7 @@ proc generateFlows {flowsLeft priority} {
 				append startTimes $now " " [expr $curr_priority] " " [expr $serverId+1] "\n"
 			}
 		}
-				
+
 		#update arguments
 		set priority [expr $priority+1]
 		set flowsLeft [expr $flowsLeft-1]
@@ -408,12 +411,42 @@ if {$failures == 1} {
 	puts "generating no failures"
 }
 Agent/TCP instproc done {} {
-	global ns endtracefile traceEndTime endTimes
+	global ns endtracefile traceEndTime endTimes purging
+	set flowID [$self set fid_];
+	# puts "FlowID: $flowID completed"
 	if ($traceEndTime) {
 		set now [$ns now]
 		set thisNode [$self set node_]
-		append endTimes $now " " [$self set fid_] " " [$thisNode id] "\n"
+		append endTimes $now " " $flowID " " [$thisNode id] "\n"
 	}
+	if {$purging} {
+		stopRedundantFlows $flowID
+	}
+}
+
+proc stopRedundantFlows { flowID } {
+	global numFlows k ftp
+	set baseID [expr $flowID%$numFlows]
+	if {$baseID==0} {
+		set baseID $numFlows		
+	}
+
+	for {set i 0} {$i < $k} {incr i} {
+		$ftp([expr $baseID+[expr $i*$numFlows]]) stop
+	}
+}
+
+
+proc curr_time {} {
+        global ns
+        set now [$ns now]
+        puts "Current Time: $now"
+}
+
+for { set i 0 } { $i < $simulation_time } { incr i } {
+        if {$i%100 == 0} {
+                $ns at $i "curr_time"
+        }
 }
 
 #Call the finish procedure after 5 seconds of simulation time
