@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<config>
-  <experiment_number>400</experiment_number>
-  <simulation_time>3000</simulation_time>
+<?xml version="1.0" ?><config>
+  <experiment_number>499</experiment_number>
+  <simulation_time>16.8</simulation_time>
   <logging>1</logging>
-  <log_dir>/Users/musa/Projects/ns-allinone-2.35/ns-2.35/scripts/redundancy/logs/</log_dir>
-  <plot_dir>/Users/musa/Projects/ns-allinone-2.35/ns-2.35/scripts/redundancy/plots/</plot_dir>
+  <log_dir>/cluster/home/aiftik01/redundancy/ns-allinone-2.35/ns-2.35/scripts/redundancy/logs/</log_dir>
+  <plot_dir>/cluster/home/aiftik01/redundancy/ns-allinone-2.35/ns-2.35/scripts/redundancy/plots/</plot_dir>
   <number_of_servers>10</number_of_servers>
-  <copies>2</copies>
-  <percent_load>70</percent_load>
+  <copies>1</copies>
+  <percent_load>95</percent_load>
   <failures>0</failures>
   <number_of_flows>20000</number_of_flows>
   <use_different_priorities>0</use_different_priorities>
-  <purging>1</purging>
-  <chunk_size>64000000.0</chunk_size>
+  <purging>0</purging>
+  <chunk_size>100000.0</chunk_size>
   <link_bandwidth>1000Mb</link_bandwidth>
+  <file_size_distribution>deterministic</file_size_distribution>
 </config>

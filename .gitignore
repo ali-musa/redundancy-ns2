@@ -1,4 +1,3 @@
-automatedScripts/
 backups/
 plots/
 logs/
@@ -6,3 +5,4 @@ logs/
 *temp*
 *~
 *.xlsx
+*old*
