@@ -12,7 +12,7 @@ function read_exp_num {
 exp_num=$(read_exp_num)
 
 #set params
-loads="1 10"
+loads="1 10 20 30 40 50 60 70 80 90 95"
 
 echo "Exp"$exp_num": starting runs..."
 
