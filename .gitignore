@@ -1,6 +1,9 @@
 backups/
+emulab*
 plots/
 logs/
 *.bak*
 *temp*
 *~
+*.xlsx
+*old*
