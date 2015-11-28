@@ -70,12 +70,12 @@ def plot_graphs(exp_nums,filename):
 		else:
 			lab = str(copy)+"-copies"
 			#lab = "Two Requests"
-			#if int(priQ) and int(purging):
-			#	lab="Duplicate-Aware\nScheduling"
-			#elif int(priQ):
-			#	lab=lab+" - with priority queues"
-			#elif int(purging):
-			#	lab =lab+ " - with cancellation"
+			if int(priQ) and int(purging):
+				lab+=" - Duplicate\nAware Scheduling"
+			elif int(priQ):
+				lab=lab+" - with priority queues"
+			elif int(purging):
+				lab =lab+ " - with cancellation"
 			
 		pl.plot(loads, y, label=lab,marker=local_marker_list.pop(0))
 		loads_array.append(loads)
