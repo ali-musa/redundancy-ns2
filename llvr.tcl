@@ -1,4 +1,5 @@
 #!/cluster/home/aiftik01/redundancy/ns-allinone-2.35/bin/ns
+set percentageLoad -1
 if { $argc != 1 } {
         puts "Usage: <*.tcl> <%load>"
         exit
@@ -49,11 +50,6 @@ array set ftp {}
 set fct 0
 #TODO: fix failures
 #TODO: fix coded levels per cbq class
-
-# #trace start start time
-# set traceStartTime $logging
-# #trace start end time
-# set traceEndTime $logging
 
 #Create a simulator object
 set ns [new Simulator]
@@ -338,8 +334,10 @@ array set linksB {}
 #Create N servers
 for {set i 0} {$i <$N} {incr i} {
 	set servers($i) [$ns node]
-	set linksA($i) [$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ]
-	set linksB($i) [$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ]
+	# set linksA($i) [$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ]
+	# set linksB($i) [$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ]
+	$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ
+	$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ
 	$ns queue-limit $n0 $servers($i) 1000
 	$ns queue-limit $servers($i) $n0 1000
 	$ns makeCBQlink $n0 $servers($i) 1
@@ -400,7 +398,8 @@ $arrival_ use-rng $arrivalRNG
 set fileSizeRng [new RNG]
 set fileSize_ [new RandomVariable/Pareto]
 $fileSize_ set avg_ $chunkSize
-$fileSize_ set shape_ $chunkSize
+#shape from conext 13
+$fileSize_ set shape_ 2.1
 $fileSize_ use-rng $fileSizeRng
 
 # prepopulate primary server distribution

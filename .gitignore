@@ -1,4 +1,5 @@
 backups/
+emulab*
 plots/
 logs/
 *.bak*
