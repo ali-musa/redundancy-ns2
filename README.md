@@ -10,11 +10,11 @@ python runme.py
 
 For analysis:
 cd automated_scripts/
-python analyze_logs.py <experiment numbers>
+python analyze_logs.py "experiment numbers"
 
 For plotting:
 cd automated_scripts/
-python generate_plots.py <base experiment number> <experiment numbers>
+python generate_plots.py "base experiment number" "experiment numbers"
 
 
 To run change settings:
