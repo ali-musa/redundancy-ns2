@@ -1,34 +1,10 @@
  #TODO: fix this for different priorities
 
 # import itertools
-from __future__ import division
 from xml.dom import minidom
 import numpy as np
 import os.path
 import sys
-import re
-
-
-#helper
-#ref:nedbatchelder.com/blog/200712/human_sorting.html
-def tryint(s):
-    try:
-        return int(s)
-    except:
-        return s
-    
-def alphanum_key(s):
-    """ Turn a string into a list of string and number chunks.
-        "z23a" -> ["z", 23, "a"]
-    """
-    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
-
-#ref:http://stackoverflow.com/questions/10919664/averaging-list-of-lists-python
-def mean(a):
-    return sum(a) / len(a)    
-##############################################################################
-
-
 
 if len(sys.argv)<=1:
 	print "usage: "+ sys.argv[0] + " <experiment number(s)>"
@@ -59,11 +35,11 @@ for exp_num in sys.argv[1:]:
 	link_bw=configurations[0].getElementsByTagName('link_bandwidth')[0].childNodes[0].nodeValue
 
 
-	write_directory=log_dir+"exp"+exp_num+"/analysis/"
+	write_directory=log_dir+"exp"+exp_num+"/analysis"
 	if not os.path.exists(write_directory):
 		os.mkdir( write_directory );
 	else:
-		os.system("rm -r "+write_directory+"*")
+		os.system("rm -r "+write_directory+"/*")
 	class FlowTime:
 		def __init__(self, time, label):
 			self.time = time
@@ -78,7 +54,7 @@ for exp_num in sys.argv[1:]:
 
 
 	#function definitions
-	def calculateAfct(startList, endList, seed_value):
+	def calculateAfct(startList, endList):
 		global load
 		total_flows=0
 		total_redundant_flows=0
@@ -107,13 +83,13 @@ for exp_num in sys.argv[1:]:
 		flowCompletionTimes = [x for x in flowCompletionTimes if x is not None]
 		afct = sum(flowCompletionTimes) / float(len(flowCompletionTimes))
 
-		with open(write_directory+"afct"+seed_value+".csv", 'a') as csvfile:
+		with open(write_directory+"/afct.csv", 'a') as csvfile:
 		   csvfile.write(load)
 		   csvfile.write(",")
 		   csvfile.write(str(afct))
 		   csvfile.write("\n")
 
-	   	with open(write_directory+"fasterRedundant"+seed_value+".csv", 'a') as csvfile:
+	   	with open(write_directory+"/fasterRedundant.csv", 'a') as csvfile:
 			csvfile.write(load)
 			csvfile.write(",")
 			if(total_redundant_flows is not 0):
@@ -122,7 +98,7 @@ for exp_num in sys.argv[1:]:
 				csvfile.write(str(0))
 			csvfile.write("\n")
 
-		with open(write_directory+"equiflows"+seed_value+".csv", 'a') as csvfile:
+		with open(write_directory+"/equiflows.csv", 'a') as csvfile:
 			csvfile.write(load)
 			csvfile.write(",")
 			if(total_redundant_flows is not 0):
@@ -131,7 +107,7 @@ for exp_num in sys.argv[1:]:
 				csvfile.write(str(0))
 			csvfile.write("\n")
 
-		with open(write_directory+"fasterOrEqualRedundant"+seed_value+".csv", 'a') as csvfile:
+		with open(write_directory+"/fasterOrEqualRedundant.csv", 'a') as csvfile:
 			csvfile.write(load)
 			csvfile.write(",")
 			if(total_redundant_flows is not 0):
@@ -141,13 +117,13 @@ for exp_num in sys.argv[1:]:
 			csvfile.write("\n")
 
 
-		# print "AFCT"+k+"_"+load+": "+str(afct)
-		# print "total_flows:"+str(total_flows)
-		# print "faster_redundant_flows:"+str(faster_redundant_flows)
-		# print "equiflows:"+str(equiflows)
-		# return afct
+		print "AFCT"+k+"_"+load+": "+str(afct)
+		print "total_flows:"+str(total_flows)
+		print "faster_redundant_flows:"+str(faster_redundant_flows)
+		print "equiflows:"+str(equiflows)
+		return afct
 
-	def calculatePercentile(startList, endList,percentile, seed_value):
+	def calculatePercentile(startList, endList,percentile):
 		global load
 		flowCompletionTimes = [None]*int(numFlows)
 		for flowId in xrange(len(endList)):
@@ -167,14 +143,14 @@ for exp_num in sys.argv[1:]:
 
 		p = np.percentile(fcts_numpy,percentile)
 
-		with open(write_directory+"percentile_"+str(percentile)+"_"+seed_value+".csv", 'a') as csvfile:
+		with open(write_directory+"/percentile_"+str(percentile)+".csv", 'a') as csvfile:
 		   csvfile.write(load)
 		   csvfile.write(",")
 		   csvfile.write(str(p))
 		   csvfile.write("\n")
 	   	
-		# print "Percentile"+k+"_"+load+"_"+str(percentile)+": "+str(p)
-		# return p
+		print "Percentile"+k+"_"+load+"_"+str(percentile)+": "+str(p)
+		return p
 
 
 		
@@ -182,9 +158,9 @@ for exp_num in sys.argv[1:]:
 	# def getOverlap(a, b):
 	# 	return max(0, min(a[1], b[1]) - max(a[0], b[0]))
 			
-	def calculateTimeOverlap(startList, endList, seed_value):
+	def calculateTimeOverlap(startList, endList):
 		global load
-		with open(write_directory+"contention_"+load+".csv", 'w') as csvfile:
+		with open(write_directory+"/contention_"+load+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
 				for flowId in xrange(len(endList)):
@@ -209,7 +185,7 @@ for exp_num in sys.argv[1:]:
 				csvfile.write(str(contention))
 				csvfile.write(str([x.time for x in sortedFlowTimes]))
 				csvfile.write("\n")
-				with open(write_directory+"contention_"+load+"_sampled_"+seed_value+".csv", 'a') as csvfile2:
+				with open(write_directory+"/contention_"+load+"_sampled.csv", 'a') as csvfile2:
 					contention_sampled=[]
 					sampled_at=[]
 					sample_generator=drange(4.0,sortedFlowTimes[-1].time, (sortedFlowTimes[-1].time -4.0)/10.0)
@@ -227,11 +203,11 @@ for exp_num in sys.argv[1:]:
 					csvfile2.write("\n")		
 				# print contention_sampled
 
-	def calculateRedundantOverlap(startList, endList, seed_value):
+	def calculateRedundantOverlap(startList, endList):
 		global load
 		contention_list=[[]]*int(N)
 		times_list=[[]]*int(N)
-		with open(write_directory+"contentionRedundant_"+load+"_"+seed_value+".csv", 'w') as csvfile:
+		with open(write_directory+"/contentionRedundant_"+load+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
 				for flowId in xrange(len(endList)):
@@ -257,7 +233,7 @@ for exp_num in sys.argv[1:]:
 				csvfile.write(str([x.time for x in sortedFlowTimes]))
 				csvfile.write("\n")
 				if len(sortedFlowTimes)>0:
-					with open(write_directory+"contentionRedundant_"+load+"_sampled_"+seed_value+".csv", 'a') as csvfile2:
+					with open(write_directory+"/contentionRedundant_"+load+"_sampled.csv", 'a') as csvfile2:
 						contention_sampled=[]
 						sampled_at=[]
 						sample_generator=drange(4.0,sortedFlowTimes[-1].time, (sortedFlowTimes[-1].time -4.0)/10.0)
@@ -277,11 +253,11 @@ for exp_num in sys.argv[1:]:
 				times_list[server-1]=[x.time for x in sortedFlowTimes]		
 		return contention_list, times_list
 
-	def calculateOriginalOverlap(startList, endList, seed_value):
+	def calculateOriginalOverlap(startList, endList):
 		global load
 		contention_list=[[]]*int(N)
 		times_list=[[]]*int(N)
-		with open(write_directory+"contentionOriginal_"+load+"_"+seed_value+".csv", 'w') as csvfile:
+		with open(write_directory+"/contentionOriginal_"+load+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
 				for flowId in xrange(len(endList)):
@@ -312,7 +288,7 @@ for exp_num in sys.argv[1:]:
 				csvfile.write(str([x.time for x in sortedFlowTimes]))
 				csvfile.write("\n")
 				if len(sortedFlowTimes)>0:
-					with open(write_directory+"contentionOriginal_"+load+"_sampled_"+seed_value+".csv", 'a') as csvfile2:
+					with open(write_directory+"/contentionOriginal_"+load+"_sampled.csv", 'a') as csvfile2:
 						contention_sampled=[]
 						sampled_at=[]
 						sample_generator=drange(4.0,sortedFlowTimes[-1].time, (sortedFlowTimes[-1].time -4.0)/10.0)
@@ -332,15 +308,15 @@ for exp_num in sys.argv[1:]:
 				times_list[server-1]=[x.time for x in sortedFlowTimes]		
 		return contention_list, times_list
 
-	def calculateFlowContention(startList, endList,seed_value):
+	def calculateFlowContention(startList, endList):
 		global load
-		contentionOriginal, timesOriginal = calculateOriginalOverlap(startList, endList, seed_value)
-		contentionRedundant, timesRedundant = calculateRedundantOverlap(startList, endList, seed_value)
+		contentionOriginal, timesOriginal = calculateOriginalOverlap(startList, endList)
+		contentionRedundant, timesRedundant = calculateRedundantOverlap(startList, endList)
 		flow_contention_list = [[]]*int(k)
 
 		for copies in xrange(0,int(k)):
 			curr_contention_list = [None]*int(numFlows)
-			with open(write_directory+"flowContentions"+load+"_"+seed_value+"_"+str(copies+1)+".csv", 'w') as csvfile:
+			with open(write_directory+"/flowContentions"+load+"_"+str(copies+1)+".csv", 'w') as csvfile:
 				for flowNumber in xrange(0,int(numFlows)):
 					flowId = (int(numFlows)*copies) + flowNumber
 					if endList[flowId] is not None:
@@ -370,91 +346,35 @@ for exp_num in sys.argv[1:]:
 			if times[index]>t:
 				return contention[index-1]
 		raise Exception
-
-
-
-	def calculateAverageOverSeeds(startswith):
-		#afct
-		loads_list=[]
-		y_list=[]
-		for file in sorted(os.listdir(write_directory),key=alphanum_key):
-			loads=[]
-			y=[]
-			# print "%s" % str(file)
-			if file.startswith(startswith):
-				with open(write_directory+file, "r") as f1:
-					for line in f1:
-						loads.append(float(line.split(",")[0]))
-						y.append(float(line.split("\n")[0].split(",")[1]))
-						
-				loads_list.append(loads) #TODO: check if all the loads are the same
-				y_list.append(y)
-
-		avg_y= map(mean, zip(*y_list))
-
-		if not os.path.exists(write_directory+"/averages"):
-			os.mkdir( write_directory+"/averages" )
-
-		for index in range(len(loads_list[0])):
-			with open(write_directory+"/averages/" +startswith+".csv", 'a') as csvfile:
-			   csvfile.write(str(loads_list[0][index]))
-			   csvfile.write(",")
-			   csvfile.write(str(avg_y[index]))
-			   csvfile.write("\n")
-
-
-
-
-
-
 	#variable initializations
 	flowStarts = [None]*(int(numFlows)*int(k)) #will contain the start time and the server number, flow ids will be the index
 	flowEnds = [None]*(int(numFlows)*int(k)) #will contain the end time and the server number, flow ids will be the index
 
-	# for percent_load in [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]:
-
-	read_dir=log_dir+"exp"+exp_num+"/"
-	for file in sorted(os.listdir(read_dir),key=alphanum_key):
-		# print file
-		if file.startswith("ends"):
-			endsFilename=file
-			load = file.split("_")[0][4:]
-			seed_value = file.split("_")[1].split(".")[0]
-			startsFilename = "starts"+load+"_"+seed_value+".tr"
-
+	for percent_load in [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]:
+		load = str(percent_load)
+		endsFilename = log_dir+"exp"+exp_num+"/"+"ends"+N+"_"+k+"_"+str(load)+"_"+failures+"_"+numFlows+"_"+str(priQ)+".tr"
+		startsFilename = log_dir+"exp"+exp_num+"/"+"starts"+N+"_"+k+"_"+load+"_"+failures+"_"+numFlows+"_"+str(priQ)+".tr"
+		if os.path.isfile(endsFilename):
 			#read and parse the files
-			with open(read_dir+startsFilename, "r") as f1:
+			with open(startsFilename, "r") as f1:
 				for line in f1:
 					lineList = line.split()
 					if len(lineList)>0:
 					 	flowStarts[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
 
-			with open(read_dir+endsFilename, "r") as f1:
+			with open(endsFilename, "r") as f1:
 				for line in f1:
 					lineList = line.split()
 					if len(lineList)>0:
 					 	flowEnds[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
 
 
-			calculateAfct(flowStarts, flowEnds, seed_value)
-			calculateTimeOverlap(flowStarts, flowEnds, seed_value)
-			calculatePercentile(flowStarts, flowEnds, 95, seed_value) 
-			calculatePercentile(flowStarts, flowEnds, 99, seed_value)
-			calculateFlowContention(flowStarts,flowEnds, seed_value)
-
-		else:
-			continue
-	
-	calculateAverageOverSeeds("afct")
-	calculateAverageOverSeeds("fasterOrEqualRedundant")
-	calculateAverageOverSeeds("fasterRedundant")
-	calculateAverageOverSeeds("equiflows")
-	calculateAverageOverSeeds("percentile_95")
-	calculateAverageOverSeeds("percentile_99")
+			calculateAfct(flowStarts, flowEnds)
+			calculateTimeOverlap(flowStarts, flowEnds)
+			calculatePercentile(flowStarts, flowEnds, 95)
+			calculatePercentile(flowStarts, flowEnds, 99)
+			calculateFlowContention(flowStarts,flowEnds)
 	print "Experiment "+exp_num+" analysis complete\n************************************\n"
 	
-
-
-
 
 

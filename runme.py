@@ -7,8 +7,10 @@ copy="1"
 priQ="0"
 purging="0"
 failures="0"
+file_size_distribution="pareto" #deterministic or pareto
+average_over_runs = 1
 
-cluster=0
+cluster=1
 
 source_file="llvr.tcl"
 config_file="config.xml"
@@ -38,6 +40,7 @@ configurations[0].getElementsByTagName('copies')[0].childNodes[0].replaceWholeTe
 configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].replaceWholeText(priQ)
 configurations[0].getElementsByTagName('purging')[0].childNodes[0].replaceWholeText(purging)
 configurations[0].getElementsByTagName('failures')[0].childNodes[0].replaceWholeText(failures)
+configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].replaceWholeText(file_size_distribution)
 
 file_handle = open(config_file,"wb")
 conf.writexml(file_handle)
@@ -54,24 +57,24 @@ os.chdir(log_dir+"exp"+str(exp_num)+"/")
 os.system("sleep 0.5")
 os.system("wait")
 
-if cluster:
-	os.system("python "+batch_file)
-else:
-	os.system("screen -S \"main_experiment"+str(exp_num)+"\" -d -m sh "+batch_file)
-	os.system("sleep 1")
-
-os.system("wait")
-time.sleep(0.5)
+for seed in xrange(1,average_over_runs+1):
+    print "running for seed: "+str(seed)
+    if cluster:
+    	os.system("python "+batch_file+" "+str(seed))
+    else:
+    	os.system("screen -S \"main_experiment"+str(exp_num)+"\" -d -m sh "+batch_file+" "+str(seed))
+    	os.system("sleep 1")
+    os.wait()
 os.system("cd "+working_dir)
-
+os.wait()
 
 chunk_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
-file_size_distribution=configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].nodeValue
 conf.unlink()
 # if(not os.path.isfile(fname)):
 
 with open("../details.txt", "a") as text_file:
     text_file.write("Experiment Number: %s\n" % exp_num)
+    text_file.write("Average Over Runs: %s\n" % average_over_runs)
     text_file.write("Chunk Size: %s\n" % chunk_size)
     text_file.write("File Size Distribution: %s\n" % file_size_distribution)
     text_file.write("Copies: %s\n" % copy)

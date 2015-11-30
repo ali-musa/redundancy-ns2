@@ -47,7 +47,7 @@ def plot_graphs(exp_nums,filename):
 	for i in exp_nums:
 		
 		exp_num=str(i)
-		read_directory = log_dir+"exp"+exp_num+"/analysis/averages"
+		read_directory = log_dir+"exp"+exp_num+"/analysis"
 		conf = minidom.parse(log_dir+'exp'+exp_num+'/config.xml')
 		configurations = conf.getElementsByTagName('config')
 		copy=configurations[0].getElementsByTagName('copies')[0].childNodes[0].nodeValue
@@ -141,7 +141,7 @@ def plot_graphs(exp_nums,filename):
 def plot_flow_contentions(exp_num, exp_nums):
 	global markerslist
 	exp_num=str(exp_num)
-	read_directory = log_dir+"exp"+exp_num+"/analysis/averages"
+	read_directory = log_dir+"exp"+exp_num+"/analysis"
 	conf = minidom.parse(log_dir+'exp'+exp_num+'/config.xml')
 	configurations = conf.getElementsByTagName('config')
 	copies=configurations[0].getElementsByTagName('copies')[0].childNodes[0].nodeValue
@@ -205,7 +205,7 @@ for exp_num_str in sys.argv[1:]:
 	exp_nums.append(int(exp_num_str)) #first exp number is the baseline
 print "Plotting experiment(s) "+str(exp_nums)+" ..."
 
-for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis/averages"):
+for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis"):
 	if not file.startswith("contention") and not file.startswith("flowContentions"):
 		# print file
 		a,b,c = plot_graphs(exp_nums,file)

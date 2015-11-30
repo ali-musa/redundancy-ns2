@@ -1,13 +1,17 @@
 #!/cluster/home/aiftik01/redundancy/ns-allinone-2.35/bin/ns
 set percentageLoad -1
-if { $argc != 1 } {
-        puts "Usage: <*.tcl> <%load>"
+if { $argc < 1 } {
+        puts "Usage: <*.tcl> <%load> <seed (optional)>"
         exit
     } else {
        set percentageLoad [lindex $argv 0]
     }
 
-expr srand(1)
+set seed_value 1
+if {$argc>1} {
+	set seed_value [lindex $argv 1]
+}
+expr srand($seed_value)
 
 
 package require tdom
@@ -66,21 +70,25 @@ Agent/TCP set packetSize_ 1000
 
 #Define a 'finish' procedure
 proc finish {} {
-	global failureTrace logging startTimes endTimes N k percentageLoad failures numFlows priQ failures
+	# global failureTrace logging startTimes endTimes N k percentageLoad failures numFlows priQ failures
+	global failureTrace logging startTimes endTimes percentageLoad failures seed_value
 	if ($logging) {
 		#flow start trace file
-		append starttracefileName "./starts" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+		# append starttracefileName "./starts" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+		append starttracefileName "./starts" $percentageLoad "_" $seed_value ".tr"
 		set starttracefile [ open $starttracefileName w ]
 		puts $starttracefile $startTimes
 		close $starttracefile
 		#flow end trace file
-		append endtracefileName "./ends" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+		# append endtracefileName "./ends" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+		append endtracefileName "./ends" $percentageLoad "_" $seed_value ".tr"
 		set endtracefile [ open $endtracefileName w ]
 		puts $endtracefile $endTimes 
 		close $endtracefile
 		if ($failures) {
 			#failure trace file
-			append failureTraceFilename "./failures" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+			# append failureTraceFilename "./failures" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
+			append failureTraceFilename "./failures" $percentageLoad "_" $seed_value ".tr"
 			set failureTraceFile [ open $failureTraceFilename w ]
 			puts $failureTraceFile $failureTrace 
 			close $failureTraceFile
@@ -256,6 +264,11 @@ proc generateFlows {flowsLeft priority} {
 		# set primaryServerId -1
 		array set serversUsed {}
 
+		#file_size_distribution
+		set fileSizeToSend [format {%0.0f} [$fileSize_ value]]
+
+		# set now [$ns now]
+
 		for {set i 0} {$i < $k} {incr i} {
 			#TODO: Test if duplicates do not hit the same server!
 
@@ -286,8 +299,8 @@ proc generateFlows {flowsLeft priority} {
 				}
 			}
 
-			set now [$ns now]
-			set fileSizeToSend [$fileSize_ value]
+
+
 			if {$file_size_distribution == "pareto"} {
 				$ns at $now "generateFlow $servers($serverId) $n0 $fileSizeToSend $curr_priority"
 							
@@ -387,8 +400,8 @@ set meanInterArrivalTime [expr $meanInterArrivalTime/$N]
 #ideal fct without load
 set fct [expr $size/$BW]
 
+$defaultRNG seed $seed_value
 #arrival distribution
-$defaultRNG seed 101
 set arrivalRNG [new RNG]
 set arrival_ [new RandomVariable/Exponential]
 $arrival_ set avg_ $meanInterArrivalTime

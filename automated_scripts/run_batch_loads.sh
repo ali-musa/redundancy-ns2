@@ -21,7 +21,7 @@ screenNo=1
 for load in $loads
 do
 	#deploy screen
-    screen -S "exp"$exp_num"" -d -m ns llvr.tcl "$load"
+    screen -S "exp"$exp_num"" -d -m ns llvr.tcl "$load" "$1"
     sleep 1
     echo "screen "$screenNo" spawned and detached"
     screenNo=$((screenNo + 1))
