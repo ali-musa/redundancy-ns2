@@ -39,6 +39,7 @@ set chunkSize [[$params selectNodes chunk_size/text()] data]
 set linkBW [[$params selectNodes link_bandwidth/text()] data]
 set purging [[$params selectNodes purging/text()] data]
 set file_size_distribution [[$params selectNodes file_size_distribution/text()] data]
+set queue_limit [[$params selectNodes queue_limit/text()] data]
 
 
 puts "percent_load: $percentageLoad"
@@ -46,6 +47,7 @@ puts "copies: $k"
 puts "priority queues: $priQ"
 puts "purging: $purging"
 puts "file_size_distribution: $file_size_distribution"
+puts "queue_limit: $queue_limit"
 puts "experiment_number: $exp_num"
 
 
@@ -60,7 +62,6 @@ set ns [new Simulator]
 #$ns rtproto DV
 
 
-set number_of_failures 5
 Agent/TCP set window_ 100000
 Agent/TCP set packetSize_ 1000 
 
@@ -109,7 +110,7 @@ proc make_fmon cbqlink {
 }
 
 Simulator instproc makeCBQlink {node1 node2 timeLink} {
-	global priQ numFlows k
+	global priQ numFlows k queue_limit
 
 	set topClass [new CBQClass]
 
@@ -130,13 +131,13 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 
 	set q1 [new Queue/DropTail]
 
-	$q1 set limit_ 500
+	$q1 set limit_ [expr $queue_limit/2]
 
 	$topClass install-queue $q1
 
 	set q2 [new Queue/DropTail]
 
-	$q2 set limit_ 500
+	$q2 set limit_ [expr $queue_limit/2]
 
 	$lowerClass install-queue $q2
 
@@ -351,8 +352,8 @@ for {set i 0} {$i <$N} {incr i} {
 	# set linksB($i) [$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ]
 	$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ
 	$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ
-	$ns queue-limit $n0 $servers($i) 1000
-	$ns queue-limit $servers($i) $n0 1000
+	$ns queue-limit $n0 $servers($i) $queue_limit
+	$ns queue-limit $servers($i) $n0 $queue_limit
 	$ns makeCBQlink $n0 $servers($i) 1
 	$ns makeCBQlink $servers($i) $n0 1
 }

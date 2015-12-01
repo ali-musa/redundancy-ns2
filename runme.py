@@ -1,13 +1,13 @@
 from xml.dom import minidom
 import os
-import time
 import os.path
 
 copy="1"
 priQ="0"
 purging="0"
 failures="0"
-file_size_distribution="pareto" #deterministic or pareto
+file_size_distribution="deterministic" #deterministic or pareto
+queue_limit="1000"
 average_over_runs = 1
 
 cluster=1
@@ -41,6 +41,7 @@ configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes
 configurations[0].getElementsByTagName('purging')[0].childNodes[0].replaceWholeText(purging)
 configurations[0].getElementsByTagName('failures')[0].childNodes[0].replaceWholeText(failures)
 configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].replaceWholeText(file_size_distribution)
+configurations[0].getElementsByTagName('queue_limit')[0].childNodes[0].replaceWholeText(queue_limit)
 
 file_handle = open(config_file,"wb")
 conf.writexml(file_handle)
@@ -77,6 +78,7 @@ with open("../details.txt", "a") as text_file:
     text_file.write("Average Over Runs: %s\n" % average_over_runs)
     text_file.write("Chunk Size: %s\n" % chunk_size)
     text_file.write("File Size Distribution: %s\n" % file_size_distribution)
+    text_file.write("Queue Limit: %s\n" % queue_limit)
     text_file.write("Copies: %s\n" % copy)
     text_file.write("Failures: %s\n" % failures)
     text_file.write("Using Queues: %s\n" % priQ)
