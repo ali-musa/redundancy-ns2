@@ -64,9 +64,9 @@ for seed in xrange(1,average_over_runs+1):
     else:
     	os.system("screen -S \"main_experiment"+str(exp_num)+"\" -d -m sh "+batch_file+" "+str(seed))
     	os.system("sleep 1")
-    os.wait()
+    os.system("sleep 1")
 os.system("cd "+working_dir)
-os.wait()
+os.system("sleep 0.25")
 
 chunk_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
 conf.unlink()
