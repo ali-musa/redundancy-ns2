@@ -439,8 +439,7 @@ for exp_num in sys.argv[1:]:
 			calculateAfct(flowStarts, flowEnds, seed_value)
 			calculateTimeOverlap(flowStarts, flowEnds, seed_value)
 			calculatePercentile(flowStarts, flowEnds, 95, seed_value) 
-			calculatePercentile(flowStarts, flowEnds, 99, seed_value)
-			calculatePercentile(flowStarts, flowEnds, 99.9, seed_value)		
+			calculatePercentile(flowStarts, flowEnds, 99.5, seed_value)
 			calculateFlowContention(flowStarts,flowEnds, seed_value)
 
 		else:
@@ -451,8 +450,7 @@ for exp_num in sys.argv[1:]:
 	calculateAverageOverSeeds("fasterRedundant")
 	calculateAverageOverSeeds("equiflows")
 	calculateAverageOverSeeds("percentile_95")
-	calculateAverageOverSeeds("percentile_99")
-	calculateAverageOverSeeds("percentile_99.9")
+	calculateAverageOverSeeds("percentile_99.5")
 	print "Experiment "+exp_num+" analysis complete\n************************************\n"
 	
 
