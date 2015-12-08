@@ -52,8 +52,12 @@ puts "experiment_number: $exp_num"
 
 
 array set ftp {}
+array set sink {}
+# array set running_flows {}
 
-set fct 0
+
+
+set fct_ideal 0
 #TODO: fix failures
 #TODO: fix coded levels per cbq class
 
@@ -63,7 +67,7 @@ set ns [new Simulator]
 
 
 Agent/TCP set window_ 100000
-Agent/TCP set packetSize_ 1000 
+# Agent/TCP set packetSize_ 1000 
 
 # set var [open "trace.tr" w]
 # $ns trace-all $var
@@ -230,18 +234,18 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 }
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
-	global ns numFlows ftp
+	global ns numFlows ftp sink
 	
 	set tcp [new Agent/TCP]
 	$ns attach-agent $src $tcp
 
-	set sink [new Agent/TCPSink]
-	$ns attach-agent $dst $sink
+	set sink($priority) [new Agent/TCPSink]
+	$ns attach-agent $dst $sink($priority)
 
 	$tcp set fid_ $priority
-	$sink set fid_ $priority
+	$sink($priority) set fid_ $priority
 
-	$ns connect $tcp $sink
+	$ns connect $tcp $sink($priority)
 
 	$tcp set minrto_ 0
 	#$tcp set maxrto_ 0.001
@@ -251,6 +255,7 @@ proc generateFlow {src dst size priority } {
 	set ftp($priority) [new Application/FTP]
 	$ftp($priority) attach-agent $tcp
 	$ftp($priority) set type_ FTP
+	# set running_flows($priority) 1
 	$ftp($priority) send $size;
 }
 
@@ -331,7 +336,7 @@ proc generateFlows {flowsLeft priority} {
 
 #topology
 #
-#		n0
+#	    n0
 #	   /| \
 #	  / |  \
 #	 /  |	\
@@ -359,7 +364,7 @@ for {set i 0} {$i <$N} {incr i} {
 }
 
 proc generateFailure { } {
-	global ns n0 servers rtmodel fct N failureTrace logging simulation_time
+	global ns n0 servers rtmodel fct_ideal N failureTrace logging simulation_time
 	set serverIdToFail [expr {int(rand()*$N)}]
 	#TODO: check if server is not already failed
 	set now [$ns now]
@@ -367,7 +372,7 @@ proc generateFailure { } {
 	$ns rtmodel-at $now down $n0 $servers($serverIdToFail)
 	# puts $ns $n0 up?
 	# $ns rtmodel-at $now down $n1 $n2
-	# set recoverAt [expr $now+[expr 200.0*$fct]]
+	# set recoverAt [expr $now+[expr 200.0*$fct_ideal]]
 	set recoverAt [expr $now+[expr $simulation_time/3.00]]
 	$ns at $recoverAt "recoverFailure $serverIdToFail"
 	if ($logging) {
@@ -378,11 +383,11 @@ proc generateFailure { } {
 
 
 proc recoverFailure { serverIdToRecover } {
-	global ns n0 servers rtmodel fct failureTrace logging
+	global ns n0 servers rtmodel fct_ideal failureTrace logging
 	set now [$ns now]
 	$ns rtmodel-at $now up $servers($serverIdToRecover) $n0
 	$ns rtmodel-at $now up $n0 $servers($serverIdToRecover)
-	set failAt [expr $now+[expr 100.0*$fct]]
+	set failAt [expr $now+[expr 100.0*$fct_ideal]]
 	$ns at $failAt "generateFailure"
 	if ($logging) {
 		append failureTrace "server: $serverIdToRecover, recovered at: $now\n"
@@ -399,7 +404,7 @@ set meanInterArrivalTime [expr $size*$loadFactor/$BW]
 set meanInterArrivalTime [expr $meanInterArrivalTime/$N]
 
 #ideal fct without load
-set fct [expr $size/$BW]
+set fct_ideal [expr $size/$BW]
 
 $defaultRNG seed $seed_value
 #arrival distribution
@@ -465,7 +470,7 @@ if {$failures == 1} {
 	
 	#first failure
 	# for {set i 0} {$i < $number_of_failures} {incr i} {
-	# 	$ns at [expr 4.0+[expr $fct*100.0]] generateFailure
+	# 	$ns at [expr 4.0+[expr $fct_ideal*100.0]] generateFailure
 	# }
 
 	# set uRNG [new RNG]
@@ -523,7 +528,10 @@ proc stopRedundantFlows { flowID } {
 	}
 
 	for {set i 0} {$i < $k} {incr i} {
-		$ftp([expr $baseID+[expr $i*$numFlows]]) stop
+		set id [expr $baseID+[expr $i*$numFlows]]
+		if {[info exists ftp($id)]} {
+			$ftp($id) stop
+		}
 	}
 }
 
@@ -535,7 +543,42 @@ proc print_curr_time {} {
         $ns at [expr $now+[expr $simulation_time/100.0]] "print_curr_time"
 }
 
+
+proc aggregate_bytes_by_fid { flowID } {
+	global numFlows k sink
+	set baseID [expr $flowID%$numFlows]
+	if {$baseID==0} {
+		set baseID $numFlows
+	}
+	set total_bytes 0
+	for {set i 0} {$i < $k} {incr i} {
+		set id [expr $baseID+[expr $i*$numFlows]]
+		if {[info exists sink($id)]} {
+			set total_bytes [expr $total_bytes + [$sink($id) set bytes_]]
+		}
+	}
+	return total_bytes
+}
+
+
+set pkt_sz [Agent/TCP set packetSize_]
+set rtt_ideal [expr (2.0*$pkt_sz)/$BW]
+
+proc check_aggregate_bytes {} {
+	global ns numFlows chunkSize rtt_ideal
+	for {set i 0} {$i < $numFlows} {incr i} {
+		set flowID [expr $i+1]
+		if { [aggregate_bytes_by_fid $flowID] > $chunkSize } {
+			stopRedundantFlows $flowID
+		}
+	}
+	set now [$ns now]
+
+	$ns at [expr $now+($rtt_ideal*4)] "check_aggregate_bytes"
+}
+
 print_curr_time
+# check_aggregate_bytes
 
 #Call the finish procedure after 5 seconds of simulation time
 
