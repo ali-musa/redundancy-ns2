@@ -27,7 +27,6 @@ set params [$config_parse getElementsByTagName config]
 
 # Set the various config params
 set exp_num [[$params selectNodes experiment_number/text()] data]
-set simulation_time [[$params selectNodes simulation_time/text()] data]
 set logging [[$params selectNodes logging/text()] data]
 set N [[$params selectNodes number_of_servers/text()] data]
 set k [[$params selectNodes copies/text()] data]
@@ -49,6 +48,7 @@ puts "purging: $purging"
 puts "file_size_distribution: $file_size_distribution"
 puts "queue_limit: $queue_limit"
 puts "experiment_number: $exp_num"
+
 
 
 array set ftp {}
@@ -576,6 +576,15 @@ proc check_aggregate_bytes {} {
 
 	$ns at [expr $now+($rtt_ideal*4)] "check_aggregate_bytes"
 }
+
+proc calculate_simultaion_time {} {
+	global N fct_ideal numFlows
+	#4+ to add start buffer
+	#3x to add end buffer
+	return [expr (($fct_ideal*$numFlows/$N)+4)*3] 
+}
+set simulation_time [calculate_simultaion_time]
+puts "simulation_time: $simulation_time"
 
 print_curr_time
 # check_aggregate_bytes

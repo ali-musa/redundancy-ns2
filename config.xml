@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
 <config>
-  <experiment_number>94</experiment_number>
-  <simulation_time>16.8</simulation_time>
+  <experiment_number>temp</experiment_number>
   <logging>1</logging>
   <link_bandwidth>1000Mb</link_bandwidth>
   <number_of_servers>10</number_of_servers>
   <number_of_flows>20000</number_of_flows>
-  <chunk_size>100000.0</chunk_size>
+  <chunk_size>1000000.0</chunk_size>
   <file_size_distribution>deterministic</file_size_distribution>
   <queue_limit>300</queue_limit>
   <copies>2</copies>

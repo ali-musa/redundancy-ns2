@@ -2,6 +2,7 @@ from xml.dom import minidom
 import os
 import os.path
 
+#config params
 copy="1"
 priQ="0"
 purging="0"
@@ -9,6 +10,7 @@ failures="0"
 file_size_distribution="deterministic" #deterministic or pareto
 queue_limit="1000"
 average_over_runs = 1
+chunk_size=100000.0 #in bytes
 
 cluster=1
 
@@ -42,6 +44,7 @@ configurations[0].getElementsByTagName('purging')[0].childNodes[0].replaceWholeT
 configurations[0].getElementsByTagName('failures')[0].childNodes[0].replaceWholeText(failures)
 configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].replaceWholeText(file_size_distribution)
 configurations[0].getElementsByTagName('queue_limit')[0].childNodes[0].replaceWholeText(queue_limit)
+configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].replaceWholeText(chunk_size)
 
 file_handle = open(config_file,"wb")
 conf.writexml(file_handle)
@@ -69,7 +72,6 @@ for seed in xrange(1,average_over_runs+1):
 os.system("cd "+working_dir)
 os.system("sleep 0.25")
 
-chunk_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
 conf.unlink()
 # if(not os.path.isfile(fname)):
 
