@@ -20,6 +20,9 @@ log_dir="../"+log_dir
 plot_dir=mainconfigurations[0].getElementsByTagName('plot_dir')[0].childNodes[0].nodeValue
 plot_dir="../"+plot_dir
 
+chunk_size=None
+file_size_distribution=None
+
 #plot settings
 legend_pos = (1,0.5)
 style.use('ieee.transaction')
@@ -33,12 +36,13 @@ pl.rc('legend', loc='center left')#, bbox_to_anchor=(1, 0.5))#, color='r')
 # pl.rcParams['legend.bbox_to_anchor']=(1, 0.5)
 # pl.rcParams['bbox_to_anchor']=(1, 0.5)
 # pl.legend(bbox_to_anchor=(1, 0.5))
-markerslist=["o","v","^","s","*"]
+markerslist=["o","v","^","s","*","D","p","<", ">", "H", "1", "2","3", "4"]
+# markerslist=["o","o","v","v","^","^","s","s","*","*","D","D","p","p","<","<"]
 # markerslist=["x","x","x","x","x"]
 pl.rcParams['savefig.dpi']=300
 
 def plot_graphs(exp_nums,filename):
-	global markerslist
+	global markerslist, chunk_size, file_size_distribution
 	fig=pl.figure()
 	local_marker_list = markerslist[:]
 	loads_array=[]
@@ -53,8 +57,12 @@ def plot_graphs(exp_nums,filename):
 		copy=configurations[0].getElementsByTagName('copies')[0].childNodes[0].nodeValue
 		priQ=configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].nodeValue
 		purging=configurations[0].getElementsByTagName('purging')[0].childNodes[0].nodeValue
-		
+		queue_limit=configurations[0].getElementsByTagName('queue_limit')[0].childNodes[0].nodeValue
 
+		
+		file_size_distribution=configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].nodeValue
+		chunk_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
+		
 		filepath=read_directory+"/"+filename
 		
 		# if int(i)==104:
@@ -81,6 +89,7 @@ def plot_graphs(exp_nums,filename):
 				lab=lab+" - with priority queues"
 			elif int(purging):
 				lab =lab+ " - with cancellation"
+		lab+=" - queue size: "+queue_limit
 			
 		pl.plot(loads, y, label=lab,marker=local_marker_list.pop(0))
 		loads_array.append(loads)
@@ -96,6 +105,7 @@ def plot_graphs(exp_nums,filename):
 	# lg.draw_frame(True)
 	# pl.title("64MB chunks, 1Gbps links, 10 servers")	
 	
+	pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
 	pl.grid(True)
 	# pl.yscale('log')
 	
@@ -112,12 +122,12 @@ def plot_graphs(exp_nums,filename):
 		pl.ylabel("Request Completion Time (s)")
 		# pl.ylim([0.0008,0.0014])
 		# pl.ylim([0.0008,0.005])
-		# # pl.ylim([0.5,1.0])
+		pl.ylim([0.0,0.75])
 		# pl.xlim([0,70])
 		# # pl.yscale('log')
 		# fig.savefig(directory+"/"+filename[:-4]+"_scaled.png", bbox_inches='tight', dpi=resolution, transparent=False)
-		pl.ylim([0.0,0.025])
-		pl.xlim([0.0,80])
+		# pl.ylim([0.0,0.025])
+		# pl.xlim([0.0,80])
 		# pl.ylim([0,0.18])
 	elif filename.startswith("fasterRedundant"):
 		pl.xlabel("Load (%)")
@@ -238,6 +248,8 @@ for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis/averages"):
 
 				lg = pl.legend(bbox_to_anchor=legend_pos)#(loc='best', fancybox=True)#, shadow=True)
 				lg.draw_frame(True)
+				pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
+
 
 				# lg = pl.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 				# lg.draw_frame(True)
