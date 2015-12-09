@@ -54,7 +54,6 @@ for exp_num in sys.argv[1:]:
 	failures=configurations[0].getElementsByTagName('failures')[0].childNodes[0].nodeValue
 	numFlows=configurations[0].getElementsByTagName('number_of_flows')[0].childNodes[0].nodeValue
 	priQ=configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].nodeValue
-	sim_time=configurations[0].getElementsByTagName('simulation_time')[0].childNodes[0].nodeValue
 	flow_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
 	link_bw=configurations[0].getElementsByTagName('link_bandwidth')[0].childNodes[0].nodeValue
 
@@ -365,11 +364,12 @@ for exp_num in sys.argv[1:]:
 
 
 	def findContention(contention,times,t):
-		# print times
+		# TODO: the contention is negative, FIX!!!
 		for index in range(len(times)):
 			if times[index]>t:
 				return contention[index-1]
-		raise Exception
+		#TODO:fix this if not found!
+		raise LookupError("Unable to find contention for flow arriving at: %s. Max time for which contention is available: %s" % (str(t), str(times[-1])) )
 
 
 
@@ -440,7 +440,7 @@ for exp_num in sys.argv[1:]:
 			calculateTimeOverlap(flowStarts, flowEnds, seed_value)
 			calculatePercentile(flowStarts, flowEnds, 95, seed_value) 
 			calculatePercentile(flowStarts, flowEnds, 99.5, seed_value)
-			calculateFlowContention(flowStarts,flowEnds, seed_value)
+			# calculateFlowContention(flowStarts,flowEnds, seed_value)
 
 		else:
 			continue
