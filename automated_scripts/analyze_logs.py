@@ -407,9 +407,7 @@ for exp_num in sys.argv[1:]:
 
 
 
-	#variable initializations
-	flowStarts = [None]*(int(numFlows)*int(k)) #will contain the start time and the server number, flow ids will be the index
-	flowEnds = [None]*(int(numFlows)*int(k)) #will contain the end time and the server number, flow ids will be the index
+	
 
 	# for percent_load in [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]:
 
@@ -417,6 +415,10 @@ for exp_num in sys.argv[1:]:
 	for file in sorted(os.listdir(read_dir),key=alphanum_key):
 		# print file
 		if file.startswith("ends"):
+			#variable initializations
+			flowStarts = [None]*(int(numFlows)*int(k)) #will contain the start time and the server number, flow ids will be the index
+			flowEnds = [None]*(int(numFlows)*int(k)) #will contain the end time and the server number, flow ids will be the index
+			
 			endsFilename=file
 			load = file.split("_")[0][4:]
 			seed_value = file.split("_")[1].split(".")[0]
@@ -439,7 +441,8 @@ for exp_num in sys.argv[1:]:
 			calculateAfct(flowStarts, flowEnds, seed_value)
 			calculateTimeOverlap(flowStarts, flowEnds, seed_value)
 			calculatePercentile(flowStarts, flowEnds, 95, seed_value) 
-			calculatePercentile(flowStarts, flowEnds, 99.5, seed_value)
+			calculatePercentile(flowStarts, flowEnds, 99, seed_value)
+			calculatePercentile(flowStarts, flowEnds, 50, seed_value)
 			# calculateFlowContention(flowStarts,flowEnds, seed_value)
 
 		else:
@@ -450,7 +453,8 @@ for exp_num in sys.argv[1:]:
 	calculateAverageOverSeeds("fasterRedundant")
 	calculateAverageOverSeeds("equiflows")
 	calculateAverageOverSeeds("percentile_95")
-	calculateAverageOverSeeds("percentile_99.5")
+	calculateAverageOverSeeds("percentile_99")
+	calculateAverageOverSeeds("percentile_50")
 	print "Experiment "+exp_num+" analysis complete\n************************************\n"
 	
 
