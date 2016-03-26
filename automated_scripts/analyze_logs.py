@@ -85,8 +85,9 @@ for exp_num in sys.argv[1:]:
 		equiflows=0
 		# equi_margin=((flow_size*8.0)/(link_bw*1000000.0))/20.0 #within 1/20th of the flow completion time under low loads
 		flowCompletionTimes = [None]*int(numFlows)
-		for flowId in xrange(len(endList)):
-			if endList[flowId] is not None:
+		for flowId in xrange(len(startList)):
+			if startList[flowId] is not None:
+				assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 				total_flows+=1
 				if flowId>=int(numFlows):
 					total_redundant_flows+=1
@@ -149,8 +150,9 @@ for exp_num in sys.argv[1:]:
 	def calculatePercentile(startList, endList,percentile, seed_value):
 		global load
 		flowCompletionTimes = [None]*int(numFlows)
-		for flowId in xrange(len(endList)):
-			if endList[flowId] is not None:
+		for flowId in xrange(len(startList)):
+			if startList[flowId] is not None:
+				assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 				currentFlowCompletionTime = endList[flowId][0]-startList[flowId][0]
 				if flowCompletionTimes[flowId%int(numFlows)] is not None:
 					if currentFlowCompletionTime < flowCompletionTimes[flowId%int(numFlows)]:
@@ -186,8 +188,9 @@ for exp_num in sys.argv[1:]:
 		with open(write_directory+"contention_"+load+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
-				for flowId in xrange(len(endList)):
-					if endList[flowId] is not None:
+				for flowId in xrange(len(startList)):
+					if startList[flowId] is not None:
+						assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 						if endList[flowId][1] == server:
 							flowTimes.append(FlowTime(endList[flowId][0],"endTime"))
 							flowTimes.append(FlowTime(startList[flowId][0],"startTime")) #assumption is that flows will start and end at the same server and not switch
@@ -233,9 +236,10 @@ for exp_num in sys.argv[1:]:
 		with open(write_directory+"contentionRedundant_"+load+"_"+seed_value+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
-				for flowId in xrange(len(endList)):
+				for flowId in xrange(len(startList)):
 					if flowId>=int(numFlows): #redundant only overlap
-						if endList[flowId] is not None:
+						if startList[flowId] is not None:
+							assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 							if endList[flowId][1] == server:
 								flowTimes.append(FlowTime(endList[flowId][0],"endTime"))
 								flowTimes.append(FlowTime(startList[flowId][0],"startTime")) #assumption is that flows will start and end at the same server and not switch
@@ -283,11 +287,12 @@ for exp_num in sys.argv[1:]:
 		with open(write_directory+"contentionOriginal_"+load+"_"+seed_value+".csv", 'w') as csvfile:
 			for server in xrange(1,int(N)+1):
 				flowTimes = []
-				for flowId in xrange(len(endList)):
+				for flowId in xrange(len(startList)):
 					if flowId>=int(numFlows): #original only overlap
 						# print "THIS LINE SHOULD NOT BE PRINTED FOR 1 COPY!!!"
 						break
-					if endList[flowId] is not None:
+					if startList[flowId] is not None:
+						assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 						if endList[flowId][1] == server:
 							flowTimes.append(FlowTime(endList[flowId][0],"endTime"))
 							flowTimes.append(FlowTime(startList[flowId][0],"startTime")) #assumption is that flows will start and end at the same server and not switch
@@ -342,7 +347,8 @@ for exp_num in sys.argv[1:]:
 			with open(write_directory+"flowContentions"+load+"_"+seed_value+"_"+str(copies+1)+".csv", 'w') as csvfile:
 				for flowNumber in xrange(0,int(numFlows)):
 					flowId = (int(numFlows)*copies) + flowNumber
-					if endList[flowId] is not None:
+					if startList[flowId] is not None:
+						assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
 						c=None
 						server=endList[flowId][1]-1
 						if copies>0: #redundant flows
@@ -429,13 +435,13 @@ for exp_num in sys.argv[1:]:
 				for line in f1:
 					lineList = line.split()
 					if len(lineList)>0:
-					 	flowStarts[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
+						flowStarts[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
 
 			with open(read_dir+endsFilename, "r") as f1:
 				for line in f1:
 					lineList = line.split()
 					if len(lineList)>0:
-					 	flowEnds[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
+						flowEnds[int(lineList[1])-1] = [float(lineList[0]), int(lineList[2])]
 
 
 			calculateAfct(flowStarts, flowEnds, seed_value)
