@@ -3,14 +3,15 @@ import os
 import os.path
 
 #config params
-copy="1"
-priQ="0"
-purging="0"
+copy="2"
+priQ="1"
+cancellation="1"
+purging="1"
 failures="0"
 file_size_distribution="deterministic" #deterministic or pareto
-queue_limit="1000"
-average_over_runs = 1
-chunk_size=100000.0 #in bytes
+queue_limit="300"
+average_over_runs = 5
+chunk_size=10000000.0 #in bytes
 
 cluster=1
 
@@ -40,6 +41,7 @@ print "spawning experiment "+str(exp_num)+" ..."
 configurations[0].getElementsByTagName('experiment_number')[0].childNodes[0].replaceWholeText(exp_num)
 configurations[0].getElementsByTagName('copies')[0].childNodes[0].replaceWholeText(copy)
 configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].replaceWholeText(priQ)
+configurations[0].getElementsByTagName('cancellation')[0].childNodes[0].replaceWholeText(cancellation)
 configurations[0].getElementsByTagName('purging')[0].childNodes[0].replaceWholeText(purging)
 configurations[0].getElementsByTagName('failures')[0].childNodes[0].replaceWholeText(failures)
 configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].replaceWholeText(file_size_distribution)
@@ -84,6 +86,7 @@ with open("../details.txt", "a") as text_file:
     text_file.write("Copies: %s\n" % copy)
     text_file.write("Failures: %s\n" % failures)
     text_file.write("Using Queues: %s\n" % priQ)
+    text_file.write("Cancellation: %s\n" % cancellation) 
     text_file.write("Purging: %s\n-----------------------\n\n" % purging) 
 
 print "experiment "+str(exp_num)+" spawned"
