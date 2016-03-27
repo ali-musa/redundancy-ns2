@@ -26,7 +26,7 @@ edit automated_scripts/generate_plots.py<br />
 config notes
 ------------
 #### tag: options "comment optional"
-file_size_distribution: deterministic pareto<br />
+file_size_distribution: deterministic or pareto<br />
 copies: any integer greater than 0<br />
 use_different_priorities: 1 or 0<br />
 cancellation: 1 or 0<br />
