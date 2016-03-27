@@ -36,6 +36,7 @@ set numFlows [[$params selectNodes number_of_flows/text()] data]
 set priQ [[$params selectNodes use_different_priorities/text()] data]
 set chunkSize [[$params selectNodes chunk_size/text()] data]
 set linkBW [[$params selectNodes link_bandwidth/text()] data]
+set cancellation [[$params selectNodes cancellation/text()] data]
 set purging [[$params selectNodes purging/text()] data]
 set file_size_distribution [[$params selectNodes file_size_distribution/text()] data]
 set queue_limit [[$params selectNodes queue_limit/text()] data]
@@ -44,6 +45,7 @@ set queue_limit [[$params selectNodes queue_limit/text()] data]
 puts "percent_load: $percentageLoad"
 puts "copies: $k"
 puts "priority queues: $priQ"
+puts "cancellation: $cancellation"
 puts "purging: $purging"
 puts "file_size_distribution: $file_size_distribution"
 puts "queue_limit: $queue_limit"
@@ -53,6 +55,8 @@ puts "experiment_number: $exp_num"
 
 array set ftp {}
 array set sink {}
+#for purging
+array set flowID_to_server_map {}
 # array set running_flows {}
 
 
@@ -231,6 +235,8 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 		# $cbqlink bind $lowerClass6 50001 60000
 
 		# $cbqlink bind $lowerClass7 60001 70000
+	return $cbqlink
+
 }
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
@@ -261,7 +267,9 @@ proc generateFlow {src dst size priority } {
 
 
 proc generateFlows {flowsLeft priority} {
-	global ns arrival_ chunkSize logging fileSize_ servers n0 N numFlows k startTimes randServer randServer2 simulation_time primary_server_distribution file_size_distribution
+	global ns arrival_ chunkSize logging fileSize_ servers n0 N numFlows k startTimes\
+	 randServer randServer2 simulation_time primary_server_distribution file_size_distribution\
+	 flowID_to_server_map
 
 
 	set now [$ns now]	
@@ -276,8 +284,7 @@ proc generateFlows {flowsLeft priority} {
 		# set now [$ns now]
 
 		for {set i 0} {$i < $k} {incr i} {
-			#TODO: Test if duplicates do not hit the same server!
-
+		
 			set uniqueServerNotFound 1
 			set curr_priority [expr $i*$numFlows+$priority]
 			while {$uniqueServerNotFound} {
@@ -316,6 +323,8 @@ proc generateFlows {flowsLeft priority} {
 			if ($logging) {
 				append startTimes $now " " [expr $curr_priority] " " [expr $serverId+1] "\n"
 			}
+            #add to flow id to server map, used for purging
+            set flowID_to_server_map($curr_priority) $serverId
 		}
 
 		#update arguments
@@ -350,17 +359,21 @@ set n0 [$ns node]
 array set servers {}
 array set linksA {}
 array set linksB {}
+array set down_links {}
+array set up_links {}
 #Create N servers
 for {set i 0} {$i <$N} {incr i} {
 	set servers($i) [$ns node]
 	# set linksA($i) [$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ]
 	# set linksB($i) [$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ]
-	$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ
-	$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ
+	$ns simplex-link $n0 $servers($i) $linkBW 0.025ms CBQ
+	$ns simplex-link $servers($i) $n0 $linkBW 0.025ms CBQ
 	$ns queue-limit $n0 $servers($i) $queue_limit
 	$ns queue-limit $servers($i) $n0 $queue_limit
 	$ns makeCBQlink $n0 $servers($i) 1
 	$ns makeCBQlink $servers($i) $n0 1
+    set down_links($i) [$ns makeCBQlink $n0 $servers($i) 1]
+    set up_links($i) [$ns makeCBQlink $servers($i) $n0 1]
 }
 
 proc generateFailure { } {
@@ -507,7 +520,7 @@ if {$failures == 1} {
 }
 
 Agent/TCP instproc done {} {
-	global ns logging endTimes purging
+	global ns logging endTimes purging cancellation
 	set flowID [$self set fid_];
 	# puts "FlowID: $flowID completed"
 	if ($logging) {
@@ -515,13 +528,14 @@ Agent/TCP instproc done {} {
 		set thisNode [$self set node_]
 		append endTimes $now " " $flowID " " [$thisNode id] "\n"
 	}
-	if {$purging} {
+	# purging turns on cancellation by default
+	if {$cancellation || $purging} {
 		stopRedundantFlows $flowID
 	}
 }
 
 proc stopRedundantFlows { flowID } {
-	global numFlows k ftp
+	global numFlows k ftp purging
 	set baseID [expr $flowID%$numFlows]
 	if {$baseID==0} {
 		set baseID $numFlows		
@@ -531,8 +545,21 @@ proc stopRedundantFlows { flowID } {
 		set id [expr $baseID+[expr $i*$numFlows]]
 		if {[info exists ftp($id)]} {
 			$ftp($id) stop
+			if {$purging} {
+				purge $id
+			}
 		}
 	}
+}
+
+# this functions gets the queue mapping of flows and then
+# calls the appropriate purge-packets-of-fid on those queues
+proc purge { flowID } \
+{
+    global down_links up_links flowID_to_server_map
+    $down_links($flowID_to_server_map($flowID)) purge-packets-of-fid $flowID
+    $up_links($flowID_to_server_map($flowID)) purge-packets-of-fid $flowID
+    #TODO: this flowID_to_server_map will not work with more elaborate topologies, implement it some other efficient way
 }
 
 
