@@ -81,17 +81,12 @@ static const char rcsid[] =
 #include "queue-monitor.h"
 #include "queue.h"
 #include "delay.h"
-#include "tcp.h" //Musa
 
 
 #define	MAXPRIO		10	/* # priorities in scheduler */
 #define	MAXLEVEL	32	/* max depth of link-share tree(s) */
 #define	LEAF_LEVEL	1	/* level# for leaves */
 #define	POWEROFTWO	16
-
-// Musa ********
-extern flow_struct* global_flows[];
-// //Musa ********
 
 
 class CBQueue;
@@ -105,10 +100,8 @@ public:
 	int	command(int argc, const char*const* argv);
 	void	recv(Packet*, Handler*);	// from upstream classifier
 
-protected:
-	//Musa
-	void purge_packets_of_fid(int fid);
-	//Musa
+protected:	
+	void purge_packets_of_fid(int fid); //purging -- Musa
 
 	void	newallot(double);		// change an allotment
 	void	update(Packet*, double);	// update when sending pkt
@@ -167,7 +160,7 @@ protected:
 	Event		intr_;
 	int		algorithm(const char *);
 	virtual int	insert_class(CBQClass*);
-	virtual void purge_packets_of_fid(int fid); //Musa
+	virtual void purge_packets_of_fid(int fid); //purging -- Musa
 	int		send_permitted(CBQClass*, double);
 	CBQClass*	find_lender(CBQClass*, double);
 	void		toplevel_departure(CBQClass*, double);
@@ -575,7 +568,7 @@ CBQueue::insert_class(CBQClass *p)
 #endif
 	return 0;
 }
-//Musa
+/*calls the purge_packets_of_fid for each class in the queue -- Musa*/
 void CBQueue::purge_packets_of_fid(int fid)
 {
 	CBQClass* cl;
@@ -605,7 +598,6 @@ void CBQueue::purge_packets_of_fid(int fid)
 		} while (cl != active_[prio]);
 	}
 }
-//Musa
 
 int CBQueue::command(int argc, const char*const* argv)
 {
@@ -641,14 +633,12 @@ int CBQueue::command(int argc, const char*const* argv)
 				return (TCL_ERROR);
 			return (TCL_OK);
 		}
-		//Musa
+		/* Tcl interface for purging, see /tcl/lib/ns-queue.tcl -- Musa */
 		if (strcmp(argv[1], "purge-packets-of-fid") == 0) 
 		{
 			this->purge_packets_of_fid(atoi(argv[2]));
 			return (TCL_OK);
 		}
-		
-		//Musa
 	}
 	return (Queue::command(argc, argv));
 }
@@ -905,28 +895,6 @@ CBQClass::recv(Packet *pkt, Handler *h)
 		if ((s = &Scheduler::instance()) != NULL)
 			cbq_->toplevel_arrival(this, s->clock());
 	}
-	/*Owais & Musa*/
- //    hdr_tcp *tcph = hdr_tcp::access(pkt);
-	// hdr_flags* hf = hdr_flags::access(pkt);
-	// hdr_ip *iph = hdr_ip::access(pkt);
-	// hdr_cmn *cmnh = hdr_cmn::access(pkt);
-
-	// int fid = iph->flowid();
-	// printf("running:%i\n", global_flows[fid]->running);
-	// if (!global_flows[fid]->running)
-	// {
-	// 	return;
-	// }
-	// if (global_flows[fid]!=NULL)
-	// {
-	// 	global_flows[fid]->priority=pri_;
-	// 	// global_flows[fid]->running=1;
-	// 	printf("CBQ: bytes_acked_so_far %i\tsize:%i\tseqno:%i\trunning:%i\tdata_complete:%i\n",global_flows[fid]->bytes_acked_so_far, cmnh->size(),tcph->seqno(), global_flows[fid]->running, global_flows[fid]->data_complete );
-	// }
-
-	// printf("CBQ:\tpriority:%i\n",pri_ );
-	
-	// /*Owais & Musa*/
 
 	send(pkt, h);	// queue packet downstream
 	if (!cbq_->blocked()) {
@@ -1170,14 +1138,6 @@ int CBQClass::command(int argc, const char*const* argv)
 			maxidle_ = m;
 			return (TCL_OK);
 		}
-		//Musa
-		// if (strcmp(argv[1], "purge-by-flowid") == 0) 
-		// {
-		// 	this->purge_packets_of_fid(atoi(argv[2]));
-		// 	return (TCL_OK);
-		// }
-		
-		//Musa
 	}
 	return (Connector::command(argc, argv));
 }
