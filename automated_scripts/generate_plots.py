@@ -22,6 +22,7 @@ plot_dir="../"+plot_dir
 
 chunk_size=None
 file_size_distribution=None
+queue_limit=None
 
 #plot settings
 legend_pos = (1,0.5)
@@ -42,7 +43,7 @@ markerslist=["o","v","^","s","*","D","p","<", ">", "H", "1", "2","3", "4"]
 pl.rcParams['savefig.dpi']=300
 
 def plot_graphs(exp_nums,filename):
-	global markerslist, chunk_size, file_size_distribution
+	global markerslist, chunk_size, file_size_distribution, queue_limit
 	fig=pl.figure()
 	local_marker_list = markerslist[:]
 	loads_array=[]
@@ -56,10 +57,10 @@ def plot_graphs(exp_nums,filename):
 		configurations = conf.getElementsByTagName('config')
 		copy=configurations[0].getElementsByTagName('copies')[0].childNodes[0].nodeValue
 		priQ=configurations[0].getElementsByTagName('use_different_priorities')[0].childNodes[0].nodeValue
+		cancellation=configurations[0].getElementsByTagName('cancellation')[0].childNodes[0].nodeValue
 		purging=configurations[0].getElementsByTagName('purging')[0].childNodes[0].nodeValue
-		queue_limit=configurations[0].getElementsByTagName('queue_limit')[0].childNodes[0].nodeValue
 
-		
+		queue_limit=configurations[0].getElementsByTagName('queue_limit')[0].childNodes[0].nodeValue
 		file_size_distribution=configurations[0].getElementsByTagName('file_size_distribution')[0].childNodes[0].nodeValue
 		chunk_size=configurations[0].getElementsByTagName('chunk_size')[0].childNodes[0].nodeValue
 		
@@ -83,13 +84,16 @@ def plot_graphs(exp_nums,filename):
 		else:
 			lab = str(copy)+"-copies"
 			#lab = "Two Requests"
-			if int(priQ) and int(purging):
+			if int(priQ) and int(purging): #by default cancellation is on if purging is on.
 				lab+=" - Duplicate\nAware Scheduling"
-			elif int(priQ):
-				lab=lab+" - with priority queues"
-			elif int(purging):
-				lab =lab+ " - with cancellation"
-		lab+=" - queue size: "+queue_limit
+			else:
+				if int(priQ):
+					lab=lab+" - with priority queues"
+				if int(purging):
+					lab=lab+" - with purging and cancellation"
+				elif int(cancellation):
+					lab=lab+" - with cancellation"
+
 			
 		pl.plot(loads, y, label=lab,marker=local_marker_list.pop(0))
 		loads_array.append(loads)
@@ -106,6 +110,7 @@ def plot_graphs(exp_nums,filename):
 	# pl.title("64MB chunks, 1Gbps links, 10 servers")	
 	
 	pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
+	pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
 	pl.grid(True)
 	# pl.yscale('log')
 	
@@ -249,6 +254,7 @@ for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis/averages"):
 				lg = pl.legend(bbox_to_anchor=legend_pos)#(loc='best', fancybox=True)#, shadow=True)
 				lg.draw_frame(True)
 				pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
+				pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
 
 
 				# lg = pl.legend(loc='center left', bbox_to_anchor=(1, 0.5))
