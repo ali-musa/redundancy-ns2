@@ -34,7 +34,7 @@ edit config.xml<br />
 edit runme.py<br />
 * overwrites most of the config.xml parameters
 * need not edit this for single run
-* expects experiment number to be an integer, increments it by 1 before runnnig
+* expects experiment number to be an integer, increments it by 1 before runnnig  
 edit automated_scripts/run_batch_loads.sh or automated_scripts/run_batch_loads.py<br />
 
 ####To change plot settings:<br />
