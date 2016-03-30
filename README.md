@@ -32,12 +32,12 @@ python generate_plots.py "base experiment number" "experiment number(s) {coma se
 ####To change run settings
 edit config.xml<br />
 edit runme.py<br />
-* overwrites most of the config.xml parameters<br />
-* need not edit this for single run<br />
-* expects experiment number to be an integer, increments it by 1 before runnnig<br />
+* overwrites most of the config.xml parameters
+* need not edit this for single run
+* expects experiment number to be an integer, increments it by 1 before runnnig
 edit automated_scripts/run_batch_loads.sh or automated_scripts/run_batch_loads.py<br />
 
-To change plot settings:<br />
+####To change plot settings:<br />
 edit automated_scripts/generate_plots.py<br />
 
 config notes
