@@ -544,10 +544,13 @@ proc stopRedundantFlows { flowID } {
 	for {set i 0} {$i < $k} {incr i} {
 		set id [expr $baseID+[expr $i*$numFlows]]
 		if {[info exists ftp($id)]} {
-			$ftp($id) stop
 			if {$purging} {
 				purge $id
+				$ftp($id) terminate
+			} else {
+				$ftp($id) stop	
 			}
+			
 		}
 	}
 }

@@ -90,7 +90,7 @@ def plot_graphs(exp_nums,filename):
 				if int(priQ):
 					lab=lab+" - with priority queues"
 				if int(purging):
-					lab=lab+" - with purging and cancellation"
+					lab=lab+" - with purging"
 				elif int(cancellation):
 					lab=lab+" - with cancellation"
 

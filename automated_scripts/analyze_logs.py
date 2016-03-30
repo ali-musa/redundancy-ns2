@@ -87,7 +87,7 @@ for exp_num in sys.argv[1:]:
 		flowCompletionTimes = [None]*int(numFlows)
 		for flowId in xrange(len(startList)):
 			if startList[flowId] is not None:
-				assert endList[flowId] is not None, "No end time recorded for flow id: %i" % (flowId+1)
+				assert endList[flowId] is not None, "No end time recorded for flow id: %i, at load: %f, seed: %i" % ((flowId+1), float(load), int(seed_value))
 				total_flows+=1
 				if flowId>=int(numFlows):
 					total_redundant_flows+=1

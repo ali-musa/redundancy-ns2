@@ -46,8 +46,12 @@ static const char rcsid[] =
 #include "random.h"
 #include "basetrace.h"
 #include "hdr_qs.h"
+#include <vector>
+#include <algorithm>
 
 int hdr_tcp::offset_;
+vector<char*> logged;   /* vector to globally store the
+                         flow objects which have been logged -- Musa */ 
 
 static class TCPHeaderClass : public PacketHeaderClass {
 public:
@@ -76,7 +80,7 @@ TcpAgent::TcpAgent()
 	  first_decrease_(1), fcnt_(0), nrexmit_(0), restart_bugfix_(1), 
           cong_action_(0), ecn_burst_(0), ecn_backoff_(0), ect_(0), 
           use_rtt_(0), qs_requested_(0), qs_approved_(0),
-	  qs_window_(0), qs_cwnd_(0), frto_(0)
+	  qs_window_(0), qs_cwnd_(0), frto_(0), is_killed_(0) //Musa
 {
 #ifdef TCP_DELAY_BIND_ALL
         // defined since Dec 1999.
@@ -645,6 +649,13 @@ int TcpAgent::headersize()
 
 void TcpAgent::output(int seqno, int reason)
 {
+    //Check if the flow is killed, return if it is -- Musa
+    if (is_killed_)
+    {  
+        rtx_timer_.resched(10000); // not sure what this does
+        return;
+    }
+    
     int force_set_rtx_timer = 0;
 	Packet* p = allocpkt();
 	hdr_tcp *tcph = hdr_tcp::access(p);
@@ -771,7 +782,6 @@ void TcpAgent::output(int seqno, int reason)
 
         ++ndatapack_;
         ndatabytes_ += databytes;
-    
 	send(p, 0);
 	if (seqno == curseq_ && seqno > maxseq_)
 		idle();  // Tell application I have sent everything so far
@@ -809,19 +819,18 @@ void TcpAgent::sendmsg(int nbytes, const char* /*flags*/)
 }
 
 void TcpAgent::advanceby(int delta)
-{
+{     
   curseq_ += delta;
 	if (delta > 0)
 		closed_ = 0;
-
-  	send_much(0, 0, maxburst_); 
+ 	send_much(0, 0, maxburst_); 
 
     /* if the connection is done, and not already closed, call finish -- Musa*/
     /* this happens when ftp stop is called and an unclean closure occurs */
     if ((highest_ack_ >= curseq_-1) && !closed_) {
         closed_ = 1;
         finish();
-    }
+    }      
 }
 
 
@@ -881,6 +890,18 @@ int TcpAgent::command(int argc, const char*const* argv)
 			return (TCL_OK);
 		}
 	}
+    else if(argc == 2)
+    {
+        /*used with purging, use this instead of advance -- Musa*/
+        if (strcmp(argv[1], "kill") == 0) 
+        {
+            is_killed_=1;
+            curseq_ += (maxseq_ - curseq_);
+            finish();
+            return (TCL_OK);
+        }
+
+    }
 	return (Agent::command(argc, argv));
 }
 
@@ -1968,7 +1989,20 @@ void TcpAgent::tcp_eln(Packet *pkt)
  */
 void TcpAgent::finish()
 {
-	Tcl::instance().evalf("%s done", this->name());
+    /* Used with killing, don't call done again 
+    if it was already called -- Musa */
+    for (int i = 0; i < logged.size(); ++i)
+    {
+        if (strcmp(logged[i],(char*)this->name())==0)
+        {
+            return;
+        }
+    }
+    /* Used with killing, store globally object 
+    ids for which done has been called -- Musa */
+    logged.push_back((char*)this->name());
+
+    Tcl::instance().evalf("%s done", this->name());
 }
 
 void RtxTimer::expire(Event*)
