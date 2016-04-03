@@ -652,7 +652,7 @@ void TcpAgent::output(int seqno, int reason)
     //Check if the flow is killed, return if it is -- Musa
     if (is_killed_)
     {  
-        rtx_timer_.resched(10000); // not sure what this does
+        idle(); //tell the application that everything has been sent -- not sure if this is needed
         return;
     }
     
@@ -896,7 +896,14 @@ int TcpAgent::command(int argc, const char*const* argv)
         if (strcmp(argv[1], "kill") == 0) 
         {
             is_killed_=1;
-            curseq_ += (maxseq_ - curseq_);
+
+            int newseq = atoi(argv[2]);
+            if (newseq > maxseq_)
+                advanceby(newseq - curseq_);
+            else
+                advanceby(maxseq_ - curseq_);
+           
+            // curseq_ += (maxseq_ - curseq_);
             finish();
             return (TCL_OK);
         }
@@ -941,6 +948,12 @@ double TcpAgent::windowd()
  */
 void TcpAgent::send_much(int force, int reason, int maxburst)
 {
+    //Check if the flow is killed, return if it is -- Musa
+    if (is_killed_)
+    {  
+        idle(); //tell the application that everything has been sent -- not sure if this is needed
+        return;
+    }
 	send_idle_helper();
 	int win = window();
 	int npackets = 0;
