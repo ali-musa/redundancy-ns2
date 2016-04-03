@@ -1818,6 +1818,12 @@ int TcpAgent::lossQuickStart()
  */
 void TcpAgent::recv(Packet *pkt, Handler*)
 {
+    //Check if the flow is killed, return if it is -- Musa
+    if (is_killed_)
+    {  
+        idle(); //tell the application that everything has been sent -- not sure if this is needed
+        return;
+    }
     hdr_ip *iph = hdr_ip::access(pkt);
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 	int valid_ack = 0;
