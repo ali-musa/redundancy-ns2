@@ -81,6 +81,7 @@ static const char rcsid[] =
 #include "queue-monitor.h"
 #include "queue.h"
 #include "delay.h"
+#include "tcp.h"
 
 
 #define	MAXPRIO		10	/* # priorities in scheduler */
