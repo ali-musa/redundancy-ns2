@@ -47,8 +47,8 @@ edit this to point to the logs and plots directories.
 
 #### config.xml
 **tag: options "comment optional"**<br />
-file_size_distribution: deterministic or pareto<br />
-copies: any integer greater than 0<br />
-use_different_priorities: 1 or 0<br />
-cancellation: 1 or 0<br />
-purging: 1 or 0 "setting this to 1 will automatically enable cancellation"<br />
+* file_size_distribution: deterministic or pareto<br />
+* copies: any integer greater than 0<br />
+* use_different_priorities: 1 or 0<br />
+* cancellation: 1 or 0<br />
+* purging: 1 or 0 "setting this to 1 will automatically enable cancellation"<br />
