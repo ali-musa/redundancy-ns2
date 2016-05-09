@@ -8,6 +8,7 @@ matplotlib and mpltools for plotting<br />
 ns llvr.tcl "%load" "seed value -- optional"<br />
 
 ####To spawn batch runs
+first edit runme.py and set cluster=0, then use the following command:
 python runme.py<br />
 
 ####For analysis
