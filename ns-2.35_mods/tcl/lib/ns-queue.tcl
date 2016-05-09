@@ -241,6 +241,14 @@ CBQLink instproc purge-packets-of-fid args {
 }
 
 #
+# to print all the underlying packet queues in the cbqlink -- Musa
+#
+CBQLink instproc print-queues args {
+	$self instvar queue_
+	$queue_ print-queues
+}
+
+#
 # procedures on a cbq class
 #
 

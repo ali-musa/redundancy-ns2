@@ -370,8 +370,6 @@ for {set i 0} {$i <$N} {incr i} {
 	$ns simplex-link $servers($i) $n0 $linkBW 0.025ms CBQ
 	$ns queue-limit $n0 $servers($i) $queue_limit
 	$ns queue-limit $servers($i) $n0 $queue_limit
-	$ns makeCBQlink $n0 $servers($i) 1
-	$ns makeCBQlink $servers($i) $n0 1
     set down_links($i) [$ns makeCBQlink $n0 $servers($i) 1]
     set up_links($i) [$ns makeCBQlink $servers($i) $n0 1]
 }
@@ -567,10 +565,10 @@ proc purge { flowID } \
 
 
 proc print_curr_time {} {
-        global ns simulation_time
-        set now [$ns now]
-        puts "Current Time: $now"
-        $ns at [expr $now+[expr $simulation_time/100.0]] "print_curr_time"
+    global ns simulation_time
+    set now [$ns now]
+    puts "Current Time: $now"
+    $ns at [expr $now+[expr $simulation_time/100.0]] "print_curr_time"
 }
 
 
@@ -605,6 +603,15 @@ proc check_aggregate_bytes {} {
 	set now [$ns now]
 
 	$ns at [expr $now+($rtt_ideal*4)] "check_aggregate_bytes"
+}
+
+proc print_queues_by_id {id} \
+{
+	global up_links down_links
+	puts "printing up queues for server id: $id"
+    $up_links($id) print-queues
+    # puts "printing down queues for server id: $id"
+    # $down_links($id) print-queues
 }
 
 proc calculate_simultaion_time {} {

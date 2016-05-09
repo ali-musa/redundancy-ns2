@@ -103,6 +103,7 @@ public:
 
 protected:	
 	void purge_packets_of_fid(int fid); //purging -- Musa
+	void printQueue(); //printing queue -- Musa
 
 	void	newallot(double);		// change an allotment
 	void	update(Packet*, double);	// update when sending pkt
@@ -162,6 +163,7 @@ protected:
 	int		algorithm(const char *);
 	virtual int	insert_class(CBQClass*);
 	virtual void purge_packets_of_fid(int fid); //purging -- Musa
+	virtual void printQueues(); //printing queues -- Musa
 	int		send_permitted(CBQClass*, double);
 	CBQClass*	find_lender(CBQClass*, double);
 	void		toplevel_departure(CBQClass*, double);
@@ -234,7 +236,6 @@ CBQueue::sched()
 void
 CBQueue::recv(Packet* p, Handler*)
 {
-
 	if (pending_pkt_ != NULL)
 		abort();
 
@@ -316,7 +317,6 @@ CBQueue::toplevel_arrival(CBQClass *cl, double now)
 Packet *
 CBQueue::deque()
 {
-
 	Scheduler& s = Scheduler::instance();
 	double now = s.clock();
 
@@ -600,6 +600,40 @@ void CBQueue::purge_packets_of_fid(int fid)
 	}
 }
 
+
+/*calls the printQueue for each queue class in the queue 
+from high pri to low pri -- Musa*/
+void CBQueue::printQueues()
+{
+	CBQClass* cl;
+	register int prio;
+	/*
+	 * prio runs from 0 .. maxprio_
+	 *
+	 * round-robin through all the classes at priority 'prio'
+	 * 	and call the CBQClass::printQueue function
+	 * go on to next lowest priority (higher prio nuber) and repeat
+	 * [lowest priority number is the highest priority]
+	 */
+
+	for (prio = 0; prio <= maxprio_; prio++) 
+	{
+		// see if there is any class at this prio
+		if ((cl = active_[prio]) == NULL) {
+			// nobody at this prio level
+			continue;
+		}
+
+		// for each class at this priority level call the CBQClass::printQueue()
+		do {
+			printf("Printing queue with priority: %i\n", prio);
+			cl->printQueue();
+			
+			cl = cl->peer_;	// move to next at same prio
+		} while (cl != active_[prio]);
+	}
+}
+
 int CBQueue::command(int argc, const char*const* argv)
 {
 
@@ -638,6 +672,15 @@ int CBQueue::command(int argc, const char*const* argv)
 		if (strcmp(argv[1], "purge-packets-of-fid") == 0) 
 		{
 			this->purge_packets_of_fid(atoi(argv[2]));
+			return (TCL_OK);
+		}
+	}
+	else if (argc==2)
+	{
+		/* Tcl interface for printing queues, see /tcl/lib/ns-queue.tcl -- Musa */
+		if (strcmp(argv[1], "print-queues") == 0) 
+		{
+			this->printQueues();
 			return (TCL_OK);
 		}
 	}
@@ -891,6 +934,12 @@ CBQClass::leaf()
 void
 CBQClass::recv(Packet *pkt, Handler *h)
 {
+	// //To print queue size seen by each flow when starting -- Musa
+	// if (((int)hdr_tcp::access(pkt)->seqno()==0) && ((int)hdr_cmn::access(pkt)->size()==40) && ((int)hdr_cmn::access(pkt)->ptype()==0))
+	// {
+	// 	printf("incming_pkt: %i\tpri_: %i\tqueue_size:%i\n",(int)hdr_ip::access(pkt)->flowid(),(int)pri_, (int)qmon_->pkts());
+	// }
+	
 	if (cbq_->toplevel()) {
 		Scheduler* s;
 		if ((s = &Scheduler::instance()) != NULL)
@@ -1045,12 +1094,18 @@ void CBQClass::purge_packets_of_fid(int fid)
 	Packet* pkt = q_->lookup_by_fid(fid);
 	while (pkt!=NULL)
 	{
-		// printf("Removing pakcet with seqno:%i\t for flow with id: %i\n", hdr_tcp::access(pkt)->seqno(), fid);
 		q_->remove_packet(pkt);
+		qmon_->drop(pkt); //to update queue monitor which otherwise doesn't get updated with remove_packet -- Musa
 		pkt = q_->lookup_by_fid(fid);
 	}
+}
 
-
+/* calls the printQueue funciton of the underlying queue (q_) -- Musa */
+void CBQClass::printQueue()
+{
+	printf("Packets in CBQ qmon_: %i\n", qmon_->pkts());
+	printf("CBQ blocked: %i\n", cbq_->blocked());
+	q_->printQueue();
 }
 
 int CBQClass::command(int argc, const char*const* argv)

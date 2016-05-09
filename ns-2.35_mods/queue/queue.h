@@ -40,6 +40,9 @@
 #include "connector.h"
 #include "packet.h"
 #include "ip.h"
+#include "tcp.h" //Musa
+
+
 class Packet;
 
 class PacketQueue : public TclObject {
@@ -74,6 +77,15 @@ public:
 				return (p);
 		}
 		return (0);
+	}
+	//prints the queue -- Musa
+	void printQueue()
+	{
+		printf("--------------------\nPrinting queue\n");
+		for (Packet* p = head_; p != 0; p = p->next_) {
+			printf("FlowID: %i\t seqno:%i\n",hdr_ip::access(p)->flowid(), hdr_tcp::access(p)->seqno());
+		}
+		printf("--------------------\n");
 	}
 	
 	/*packet lookup by flow id, returns a pointer to the first packet it finds -- Musa*/
@@ -115,7 +127,6 @@ protected:
 	int len_;		// packet count
 	int bytes_;		// queue size in bytes
 
-
 // MONARCH EXTNS
 private:
 	Packet *iter;
@@ -136,7 +147,8 @@ class Queue : public Connector {
 public:
 	Packet* lookup_by_fid(int fid) {return pq_->lookup_by_fid(fid);} /* Musa */
 	void remove_packet(Packet* pkt) {return pq_->remove(pkt);} /* Musa*/
-	
+	void printQueue(){return pq_->printQueue();} //Musa
+
 	virtual void enque(Packet*) = 0;
 	virtual Packet* deque() = 0;
 	virtual void recv(Packet*, Handler*);
