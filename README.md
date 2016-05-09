@@ -3,6 +3,11 @@ redundancy
 ####requires
 tdom for tcl<br />
 matplotlib and mpltools for plotting<br />
+python
+
+####setting up
+copy the ns2.35_mods patch to the relevant directories<br />
+make and install ns
 
 ####For a single run
 ns llvr.tcl "%load" "seed value -- optional"<br />
@@ -53,3 +58,7 @@ edit this to point to the logs and plots directories.
 * use_different_priorities: 1 or 0<br />
 * cancellation: 1 or 0<br />
 * purging: 1 or 0 "setting this to 1 will automatically enable cancellation"<br />
+
+ns code contributions
+------------
+all ns2.35 code contributions are marked with comment "musa"
