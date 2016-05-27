@@ -896,14 +896,7 @@ int TcpAgent::command(int argc, const char*const* argv)
         if (strcmp(argv[1], "kill") == 0) 
         {
             is_killed_=1;
-
-            int newseq = atoi(argv[2]);
-            if (newseq > maxseq_)
-                advanceby(newseq - curseq_);
-            else
-                advanceby(maxseq_ - curseq_);
-           
-            // curseq_ += (maxseq_ - curseq_);
+            advanceby(maxseq_ - curseq_);
             finish();
             return (TCL_OK);
         }
