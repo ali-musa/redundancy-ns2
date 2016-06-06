@@ -52,14 +52,15 @@ puts "queue_limit: $queue_limit"
 puts "experiment_number: $exp_num"
 
 
+#set delay in ms
+set delay 0.025
 
+######### variable initializations ############
 array set ftp {}
 array set sink {}
 #for purging
 array set flowID_to_server_map {}
 # array set running_flows {}
-
-
 
 set fct_ideal 0
 #TODO: fix failures
@@ -240,7 +241,7 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 }
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
-	global ns numFlows ftp sink
+	global ns numFlows ftp sink up_links flowID_to_server_map delay
 	
 	set tcp [new Agent/TCP]
 	$ns attach-agent $src $tcp
@@ -253,16 +254,27 @@ proc generateFlow {src dst size priority } {
 
 	$ns connect $tcp $sink($priority)
 
-	$tcp set minrto_ 0
-	#$tcp set maxrto_ 0.001
-	$tcp set tcpTick_ 0.0001
+	$tcp set minrto_ [expr 1.01 * $delay * 2 / 1000]
+	#$tcp set maxrto_ [expr 512 * $delay * 2 / 1000]
+	$tcp set tcpTick_ [expr $delay / 1000]
+	# RFC 6298
+	$tcp set rtxcur_init_ 1
 
 	#Setup a FTP over TCP connection
 	set ftp($priority) [new Application/FTP]
 	$ftp($priority) attach-agent $tcp
 	$ftp($priority) set type_ FTP
 	# set running_flows($priority) 1
+	if {$priority>$numFlows} {
+		set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 1]
+	} else {
+		set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 0]
+	}
+	puts "Queue size seen by flow:\t$priority when starting:\t$q_size"
+
 	$ftp($priority) send $size;
+	
+
 }
 
 
@@ -279,7 +291,11 @@ proc generateFlows {flowsLeft priority} {
 		array set serversUsed {}
 
 		#file_size_distribution
-		set fileSizeToSend [format {%0.0f} [$fileSize_ value]]
+		if {$file_size_distribution=="websearch" || $file_size_distribution=="datamining"} {
+			set fileSizeToSend [expr ceil ([$fileSize_ value]) * 1000]
+		} else {
+			set fileSizeToSend [format {%0.0f} [$fileSize_ value]]
+		}
 
 		# set now [$ns now]
 
@@ -314,12 +330,12 @@ proc generateFlows {flowsLeft priority} {
 
 
 
-			if {$file_size_distribution == "pareto"} {
-				$ns at $now "generateFlow $servers($serverId) $n0 $fileSizeToSend $curr_priority"
-							
-			} elseif {$file_size_distribution == "deterministic"} {
+			if {$file_size_distribution == "deterministic"} {
 				$ns at $now "generateFlow $servers($serverId) $n0 $chunkSize $curr_priority"
+			} else {
+				$ns at $now "generateFlow $servers($serverId) $n0 $fileSizeToSend $curr_priority"
 			}
+
 			if ($logging) {
 				append startTimes $now " " [expr $curr_priority] " " [expr $serverId+1] "\n"
 			}
@@ -366,8 +382,8 @@ for {set i 0} {$i <$N} {incr i} {
 	set servers($i) [$ns node]
 	# set linksA($i) [$ns simplex-link $n0 $servers($i) $linkBW 0.00ms CBQ]
 	# set linksB($i) [$ns simplex-link $servers($i) $n0 $linkBW 0.00ms CBQ]
-	$ns simplex-link $n0 $servers($i) $linkBW 0.025ms CBQ
-	$ns simplex-link $servers($i) $n0 $linkBW 0.025ms CBQ
+	$ns simplex-link $n0 $servers($i) $linkBW [set delay]ms CBQ
+	$ns simplex-link $servers($i) $n0 $linkBW [set delay]ms CBQ
 	$ns queue-limit $n0 $servers($i) $queue_limit
 	$ns queue-limit $servers($i) $n0 $queue_limit
     set down_links($i) [$ns makeCBQlink $n0 $servers($i) 1]
@@ -426,11 +442,27 @@ $arrival_ use-rng $arrivalRNG
 
 #file size distribution
 set fileSizeRng [new RNG]
-set fileSize_ [new RandomVariable/Pareto]
-$fileSize_ set avg_ $chunkSize
-#shape from conext 13
-$fileSize_ set shape_ 2.1
-$fileSize_ use-rng $fileSizeRng
+if { $file_size_distribution == "websearch" } {
+	set fileSize_ [new RandomVariable/Empirical]
+	#$fileSizeRng seed $seed_value
+	$fileSize_ use-rng $fileSizeRng
+	$fileSize_ set interpolation_ 2
+	$fileSize_ loadCDF "./traffic/CDF_websearch.tcl"
+	puts "FlowSize: Empirical Distribution from Web Search. Mean Flow Size = $chunkSize"
+} elseif {$file_size_distribution == "datamining"} {
+	set fileSize_ [new RandomVariable/Empirical]
+	#$fileSizeRng seed $seed_value
+	$fileSize_ use-rng $fileSizeRng
+	$fileSize_ set interpolation_ 2
+	$fileSize_ loadCDF "./traffic/CDF_datamining.tcl"
+	puts "FlowSize: Empirical Distribution from Data Mining. Mean Flow Size = $chunkSize"
+} else {
+	set fileSize_ [new RandomVariable/Pareto]
+	$fileSize_ set avg_ $chunkSize
+	#shape from conext 13
+	$fileSize_ set shape_ 2.1
+	$fileSize_ use-rng $fileSizeRng
+}
 
 # prepopulate primary server distribution
 array set primary_server_distribution {}
@@ -628,7 +660,11 @@ print_curr_time
 
 #Call the finish procedure after 5 seconds of simulation time
 
-$ns at $simulation_time "finish"
+if { $file_size_distribution=="websearch" || $file_size_distribution=="datamining" } {
+	$ns at [expr $simulation_time+180] "finish"	
+} else {
+	$ns at $simulation_time "finish"
+}
 
 #Run the simulation
 
