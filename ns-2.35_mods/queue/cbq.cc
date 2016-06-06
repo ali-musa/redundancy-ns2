@@ -104,6 +104,8 @@ public:
 protected:	
 	void purge_packets_of_fid(int fid); //purging -- Musa
 	void printQueue(); //printing queue -- Musa
+	int get_queue_size(); //to get queue sizes -- Musa
+	
 
 	void	newallot(double);		// change an allotment
 	void	update(Packet*, double);	// update when sending pkt
@@ -164,6 +166,7 @@ protected:
 	virtual int	insert_class(CBQClass*);
 	virtual void purge_packets_of_fid(int fid); //purging -- Musa
 	virtual void printQueues(); //printing queues -- Musa
+	int get_queue_size_by_pri(int prio); //to get the queue size by priority -- Musa
 	int		send_permitted(CBQClass*, double);
 	CBQClass*	find_lender(CBQClass*, double);
 	void		toplevel_departure(CBQClass*, double);
@@ -633,6 +636,18 @@ void CBQueue::printQueues()
 		} while (cl != active_[prio]);
 	}
 }
+/*Calls the get_queue_size() method of the queue class at the specified priority level.
+Returns -1 in case the there is no queue at that priority -- Musa*/
+int CBQueue::get_queue_size_by_pri(int prio)
+{
+	CBQClass* cl;
+	// see if there is any class at this prio
+	if ((cl = active_[prio]) == NULL) {
+		// nobody at this prio level
+		return -1;
+	}
+	return cl->get_queue_size();
+}
 
 int CBQueue::command(int argc, const char*const* argv)
 {
@@ -672,6 +687,12 @@ int CBQueue::command(int argc, const char*const* argv)
 		if (strcmp(argv[1], "purge-packets-of-fid") == 0) 
 		{
 			this->purge_packets_of_fid(atoi(argv[2]));
+			return (TCL_OK);
+		}
+		/* Tcl interface for getting queue size from CBQ, see /tcl/lib/ns-queue.tcl -- Musa */
+		if (strcmp(argv[1], "get-queue-size-by-pri") == 0) 
+		{
+			tcl.resultf("%i",this->get_queue_size_by_pri(atoi(argv[2])));
 			return (TCL_OK);
 		}
 	}
@@ -934,7 +955,7 @@ CBQClass::leaf()
 void
 CBQClass::recv(Packet *pkt, Handler *h)
 {
-	// //To print queue size seen by each flow when starting -- Musa
+	//To print queue size seen by each flow when starting -- Musa
 	// if (((int)hdr_tcp::access(pkt)->seqno()==0) && ((int)hdr_cmn::access(pkt)->size()==40) && ((int)hdr_cmn::access(pkt)->ptype()==0))
 	// {
 	// 	printf("incming_pkt: %i\tpri_: %i\tqueue_size:%i\n",(int)hdr_ip::access(pkt)->flowid(),(int)pri_, (int)qmon_->pkts());
@@ -1107,6 +1128,11 @@ void CBQClass::printQueue()
 	printf("CBQ blocked: %i\n", cbq_->blocked());
 	q_->printQueue();
 }
+/* To get the queue size in packets as used in CBQ -- Musa*/ 
+int CBQClass::get_queue_size()
+{
+	return (int)qmon_->pkts();
+}
 
 int CBQClass::command(int argc, const char*const* argv)
 {
@@ -1137,6 +1163,7 @@ int CBQClass::command(int argc, const char*const* argv)
 				tcl.resultf("");
 			return (TCL_OK);
 		}
+
 	} else if (argc == 3) {
 		// for now these are the same
 		if ((strcmp(argv[1], "parent") == 0)) {

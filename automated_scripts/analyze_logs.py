@@ -445,7 +445,7 @@ for exp_num in sys.argv[1:]:
 
 
 			calculateAfct(flowStarts, flowEnds, seed_value)
-			calculateTimeOverlap(flowStarts, flowEnds, seed_value)
+			# calculateTimeOverlap(flowStarts, flowEnds, seed_value)
 			calculatePercentile(flowStarts, flowEnds, 95, seed_value) 
 			calculatePercentile(flowStarts, flowEnds, 99, seed_value)
 			calculatePercentile(flowStarts, flowEnds, 50, seed_value)

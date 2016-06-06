@@ -25,13 +25,13 @@ file_size_distribution=None
 queue_limit=None
 
 #plot settings
-legend_pos = (1,0.5)
+legend_pos = (0.5,-0.2)
 style.use('ieee.transaction')
 # pl.rcParams['lines.linewidth'] = 2
 # pl.rcParams['font.weight']="large"
 # pl.rcParams['legend.loc'] = 'best'
 # pl.rcParams['legend.set_bbox_to_anchor'] = (1,0.5)
-pl.rc('legend', loc='center left')#, bbox_to_anchor=(1, 0.5))#, color='r')
+pl.rc('legend', loc='upper center')#, bbox_to_anchor=(1, 0.5))#, color='r')
 # pl.rcParams['legend.fancybox']=True#, shadow=True
 # pl.rcParams['legend.bbox_to_anchor']=(1, 0.5)
 # pl.rcParams['legend.bbox_to_anchor']=(1, 0.5)
@@ -109,8 +109,8 @@ def plot_graphs(exp_nums,filename):
 	# lg.draw_frame(True)
 	# pl.title("64MB chunks, 1Gbps links, 10 servers")	
 	
-	pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
-	pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
+	# pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
+	# pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
 	pl.grid(True)
 	# pl.yscale('log')
 	
@@ -127,8 +127,9 @@ def plot_graphs(exp_nums,filename):
 		pl.ylabel("Request Completion Time (s)")
 		# pl.ylim([0.0008,0.0014])
 		# pl.ylim([0.0008,0.005])
-		pl.ylim([0.0,0.75])
-		# pl.xlim([0,70])
+		# pl.ylim([0.0005,0.004])
+		pl.ylim([0.05,20])
+		pl.xlim([0,90])
 		# # pl.yscale('log')
 		# fig.savefig(directory+"/"+filename[:-4]+"_scaled.png", bbox_inches='tight', dpi=resolution, transparent=False)
 		# pl.ylim([0.0,0.025])
@@ -217,7 +218,8 @@ def plot_flow_contentions(exp_num, exp_nums):
 
 exp_nums=[] 
 for exp_num_str in sys.argv[1:]:
-	exp_nums.append(int(exp_num_str)) #first exp number is the baseline
+# 	# exp_nums.append(int(exp_num_str)) #first exp number is the baseline
+	exp_nums.append(exp_num_str) #first exp number is the baseline
 print "Plotting experiment(s) "+str(exp_nums)+" ..."
 
 for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis/averages"):
@@ -254,13 +256,13 @@ for file in os.listdir(log_dir+"exp"+str(exp_nums[0])+"/analysis/averages"):
 				lg = pl.legend(bbox_to_anchor=legend_pos)#(loc='best', fancybox=True)#, shadow=True)
 				lg.draw_frame(True)
 				pl.title(str(float(chunk_size)/1000000)+" MB\n"+file_size_distribution)
-				pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
+				# pl.text(-0.2,-0.2,"queue_limit: "+str(queue_limit), fontsize=8)
 
 
 				# lg = pl.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 				# lg.draw_frame(True)
 
-				pl.xlim([0,80])
+				# pl.xlim([0,80])
 				# pl.ylim([0,50])
 				pl.xlabel("Load (%)")
 				pl.grid(True)

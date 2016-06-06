@@ -230,13 +230,23 @@ CBQLink instproc insert args {
 }
 
 #
-# to remove packets by flow id -- Musa
+# to remove packets by flow id, implemented in CBQ -- Musa
 #
 CBQLink instproc purge-packets-of-fid args {
 	$self instvar queue_
 	set fid [lindex $args 0]
 	# puts "purging packets by fid: $fid"
 	$queue_ purge-packets-of-fid $fid
+
+}
+
+#
+# to get queue size by priority, implemented in CBQ -- Musa
+#
+CBQLink instproc get-queue-size-by-pri args {
+	$self instvar queue_
+	set pri [lindex $args 0]
+	$queue_ get-queue-size-by-pri $pri
 
 }
 
