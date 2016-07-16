@@ -60,7 +60,6 @@ array set ftp {}
 array set sink {}
 #for purging
 array set flowID_to_server_map {}
-# array set running_flows {}
 
 set fct_ideal 0
 #TODO: fix failures
@@ -80,24 +79,29 @@ Agent/TCP set window_ 100000
 
 #Define a 'finish' procedure
 proc finish {} {
-	# global failureTrace logging startTimes endTimes N k percentageLoad failures numFlows priQ failures
-	global failureTrace logging startTimes endTimes percentageLoad failures seed_value
+	global failureTrace logging startTimes endTimes percentageLoad failures seed_value queueSizes
 	if ($logging) {
 		#flow start trace file
-		# append starttracefileName "./starts" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
 		append starttracefileName "./starts" $percentageLoad "_" $seed_value ".tr"
 		set starttracefile [ open $starttracefileName w ]
 		puts $starttracefile $startTimes
 		close $starttracefile
+		
 		#flow end trace file
-		# append endtracefileName "./ends" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
 		append endtracefileName "./ends" $percentageLoad "_" $seed_value ".tr"
 		set endtracefile [ open $endtracefileName w ]
 		puts $endtracefile $endTimes 
 		close $endtracefile
+		
+		#queue sizes trace file
+		append queuetracefileName "./queue" $percentageLoad "_" $seed_value ".tr"
+		set queuetracefile [ open $queuetracefileName w ]
+		puts $queuetracefile $queueSizes 
+		close $queuetracefile
+		
+
 		if ($failures) {
 			#failure trace file
-			# append failureTraceFilename "./failures" $N "_" $k "_" $percentageLoad "_" $failures "_" $numFlows "_" $priQ ".tr"
 			append failureTraceFilename "./failures" $percentageLoad "_" $seed_value ".tr"
 			set failureTraceFile [ open $failureTraceFilename w ]
 			puts $failureTraceFile $failureTrace 
@@ -241,7 +245,7 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 }
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
-	global ns numFlows ftp sink up_links flowID_to_server_map delay
+	global ns numFlows ftp sink up_links flowID_to_server_map delay logging queueSizes
 	
 	set tcp [new Agent/TCP]
 	$ns attach-agent $src $tcp
@@ -264,17 +268,18 @@ proc generateFlow {src dst size priority } {
 	set ftp($priority) [new Application/FTP]
 	$ftp($priority) attach-agent $tcp
 	$ftp($priority) set type_ FTP
-	# set running_flows($priority) 1
-	if {$priority>$numFlows} {
-		set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 1]
-	} else {
-		set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 0]
+
+	if {$logging} {
+		if {$priority>$numFlows} {
+			set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 1]
+			append queueSizes "$priority\t[expr $flowID_to_server_map($priority)+1]\t1\t$q_size\n"
+		} else {
+			set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 0]
+			append queueSizes "$priority\t[expr $flowID_to_server_map($priority)+1]\t0\t$q_size\n"
+		}
 	}
-	puts "Queue size seen by flow:\t$priority when starting:\t$q_size"
 
 	$ftp($priority) send $size;
-	
-
 }
 
 
