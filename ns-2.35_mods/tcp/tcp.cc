@@ -49,9 +49,17 @@ static const char rcsid[] =
 #include <vector>
 #include <algorithm>
 
-int hdr_tcp::offset_;
+/*used for initializing global flow struct used for aggregation -- Musa */
+const int num_flows=20000; // TODO: get this from tcl config, 
+const int k = 2; // TODO: get this from tcl config
+
+/*global flow struct used for aggregation -- Musa*/
+flow_struct *global_flows[num_flows*k+1] = {NULL};
+
 vector<char*> logged;   /* vector to globally store the
                          flow objects which have been logged -- Musa */ 
+
+int hdr_tcp::offset_;
 
 static class TCPHeaderClass : public PacketHeaderClass {
 public:
@@ -782,6 +790,23 @@ void TcpAgent::output(int seqno, int reason)
 
         ++ndatapack_;
         ndatabytes_ += databytes;
+    
+    //populate this flow in global flows struct (aggregation) -- Musa
+    int fid = iph->flowid();
+    if (global_flows[fid]==NULL)
+    {
+        //init a new flow
+        global_flows[fid] = (struct flow_struct*)malloc(sizeof(struct flow_struct));
+        global_flows[fid]->running=true;
+        global_flows[fid]->seq_acked=-1;
+        global_flows[fid]->agg_seq_acked=-1;
+        global_flows[fid]->final_seq=curseq_;
+        global_flows[fid]->priority=-1;
+        // printf("LOG:\tNew flow inserted with ID: %i\n", fid);
+    }
+
+
+
 	send(p, 0);
 	if (seqno == curseq_ && seqno > maxseq_)
 		idle();  // Tell application I have sent everything so far
@@ -1388,6 +1413,63 @@ void TcpAgent::newack(Packet* pkt)
 {
 	double now = Scheduler::instance().clock();
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
+    // Musa
+    // For every ack update the flow entry
+    hdr_ip *iph = hdr_ip::access(pkt);
+    // hdr_cmn *cmnh = hdr_cmn::access(pkt);
+    // printf("SENDER\tRecieved Ack for Seqno: %i\n", tcph->seqno());
+    int fid = iph->flowid();
+    if (global_flows[fid]!=NULL)
+    {
+        /* code */
+        // printf("curseq_:%i\n", (int)curseq_);
+        if (tcph->seqno()>global_flows[fid]->seq_acked)
+        {
+            // update only if an ack with a higher seq number arrives
+            global_flows[fid]->seq_acked=tcph->seqno(); 
+        }
+        
+        int base_fid = fid%num_flows;
+        if (base_fid==0) 
+        {
+            base_fid = num_flows;
+        }
+
+        int new_agg_seq_acked = 0;
+        //calucate aggregate sequence
+        for (int i = 0; i < k; ++i)
+        {
+            int id = base_fid+(i*num_flows);
+            if (global_flows[id]!=NULL)
+            {
+                // printf("id:%i\n",id );
+                new_agg_seq_acked += global_flows[id]->seq_acked;
+            }
+        }
+        //update aggregate sequence
+        //TODO: refactor this code or think of a better way to achieve this!
+        for (int i = 0; i < k; ++i)
+        {
+            int id = base_fid+(i*num_flows);
+            if (global_flows[id]!=NULL)
+            {
+                // check because some flows might have freed memory and new_agg could be incorrect
+                if (global_flows[id]->agg_seq_acked<new_agg_seq_acked) 
+                {
+                    // another assumption for this to be correct is:
+                    // that all the redundant flows must be stopped at the 
+                    // same simulation time which are based on this agg_seq_acked value
+                    global_flows[id]->agg_seq_acked=new_agg_seq_acked;
+                }
+            }
+        }
+    }
+    //can use the following two commands to stop the flow
+    // Tcl::instance().evalf("%s advance 0",this->name());
+    // Tcl::instance().evalf("%s close",this->name());
+    //Musa ********************
+
+
 	/* 
 	 * Wouldn't it be better to set the timer *after*
 	 * updating the RTT, instead of *before*? 
@@ -1516,6 +1598,12 @@ void TcpAgent::recv_newack_helper(Packet *pkt) {
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;
+        //Musa ************
+        int fid = hdr_ip::access(pkt)->flowid();
+        delete global_flows[fid];
+        global_flows[fid] = NULL; // free the memory, not going to be needed again
+        // printf("LOG:\tFlow id: %i removed from global_flows!\n", fid);
+        //Musa ************
 		finish();
 	}
 	if (QOption_ && curseq_ == highest_ack_ +1) {

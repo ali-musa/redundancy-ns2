@@ -652,6 +652,18 @@ protected:
 	int ns_vegas_fix_level_;   // see comment at end of tcp-vegas.cc for details of fixes
 };
 
+
+//Used for aggregating bytes of duplicate flows --Musa
+struct flow_struct {
+    bool running; // means that the app is still sending data
+    int seq_acked; // latest sequence number whose ack is received at the sender
+    int agg_seq_acked; // sum of "seq_acked" over all the redundant flows, update at the sender whenever a new ack is received
+    int final_seq; // set to curseq_, the highest seqno produced by app
+    int priority; // used for cbq
+    // int queue_id; // TODO: make ids for queues
+    // int inflight_packets_when_stopped; // TODO: perhaps dont delete flow entry or have another datastructure
+};
+
 // Local Variables:
 // mode:c++
 // c-basic-offset: 8
