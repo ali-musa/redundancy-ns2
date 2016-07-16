@@ -189,7 +189,7 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 
 	set cbqlink [$self link $node1 $node2]
 
-	$topClass setparams none true 1.00 auto 0 1 0
+	$topClass setparams none false 1.00 auto 0 1 0
 
 	$lowerClass setparams none false 1.0 auto 1 1 0
 
@@ -245,7 +245,7 @@ Simulator instproc makeCBQlink {node1 node2 timeLink} {
 }
 #generate flows after a random interval
 proc generateFlow {src dst size priority } {
-	global ns numFlows ftp sink up_links flowID_to_server_map delay logging queueSizes
+	global ns numFlows ftp sink up_links flowID_to_server_map delay logging queueSizes startTimes
 	
 	set tcp [new Agent/TCP]
 	$ns attach-agent $src $tcp
@@ -277,6 +277,8 @@ proc generateFlow {src dst size priority } {
 			set q_size [$up_links($flowID_to_server_map($priority)) get-queue-size-by-pri 0]
 			append queueSizes "$priority\t[expr $flowID_to_server_map($priority)+1]\t0\t$q_size\n"
 		}
+		set now [$ns now]
+		append startTimes $now " " [expr $priority] " " [expr $flowID_to_server_map($priority)+1] "\n"
 	}
 
 	$ftp($priority) send $size;
@@ -341,9 +343,9 @@ proc generateFlows {flowsLeft priority} {
 				$ns at $now "generateFlow $servers($serverId) $n0 $fileSizeToSend $curr_priority"
 			}
 
-			if ($logging) {
-				append startTimes $now " " [expr $curr_priority] " " [expr $serverId+1] "\n"
-			}
+			# if ($logging) {
+			# 	append startTimes $now " " [expr $curr_priority] " " [expr $serverId+1] "\n"
+			# }
             #add to flow id to server map, used for purging
             set flowID_to_server_map($curr_priority) $serverId
 		}
@@ -489,6 +491,18 @@ for {set i 0} {$i < $numFlows} {incr i} {
 
 
 $ns at 4.0 "generateFlows $numFlows 1"
+
+set burst 100
+for {set i 0} {$i < $N} {incr i} {
+	for {set j 1} {$j <= $burst} {incr j} {
+		for {set copy 1} {$copy <= $k} {incr copy} {
+			set flowID_to_server_map([expr $copy*$numFlows - [expr $burst*$i +$j]]) $i
+			$ns at 4.5 "generateFlow $servers($i) $n0 10000 [expr $copy*$numFlows - [expr $burst*$i +$j]]"
+			# append startTimes "4.5 " [expr $copy*$numFlows - [expr $burst*$i +$j]] " " [expr $i+1] "\n"
+		}
+	}
+}
+
 
 if {$failures == 1} {
 	#failures

@@ -5,13 +5,13 @@
   <link_bandwidth>1000Mb</link_bandwidth>
   <number_of_servers>10</number_of_servers>
   <number_of_flows>20000</number_of_flows>
-  <chunk_size>10000000.0</chunk_size>
+  <chunk_size>100000.0</chunk_size>
   <file_size_distribution>deterministic</file_size_distribution>
   <queue_limit>300</queue_limit>
   <copies>2</copies>
-  <use_different_priorities>1</use_different_priorities>
-  <cancellation>1</cancellation>
-  <purging>1</purging>
+  <use_different_priorities>0</use_different_priorities>
+  <cancellation>0</cancellation>
+  <purging>0</purging>
   <failures>0</failures>
   <percent_load>70</percent_load>
 </config>
