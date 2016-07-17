@@ -312,7 +312,7 @@ void TcpSink::ack(Packet* opkt)
 			// printf("RECIEVER:\tEarly termination of flow id: %i\n", ofid);
 			//call the function stopRedundantFlows implemented in tcl
 			//this calls ftp stop for all the redundant flows for this id
-			printf("Aggregate flow stop called at time:%f, for flow id:%i\n",Scheduler::instance().clock(),ofid);
+			//printf("Aggregate flow stop called at time:%f, for flow id:%i\n",Scheduler::instance().clock(),ofid);
 			Tcl::instance().evalf("stopRedundantFlows %i",ofid); 
 			//TODO: update running status for all the flows that have been stopped
 			global_flows[ofid]->running = false;
