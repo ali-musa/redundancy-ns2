@@ -306,7 +306,7 @@ void TcpSink::ack(Packet* opkt)
 	else
 	{
 
-		printf("RECEIVER:\tGot packet with FlowID:%i, seqno:%i, agg_seq_acked: %i, is running?: %i\n",ofid,otcp->seqno(),global_flows[ofid]->agg_seq_acked, global_flows[ofid]->running);
+		//printf("RECEIVER:\tGot packet with FlowID:%i, seqno:%i, agg_seq_acked: %i, is running?: %i\n",ofid,otcp->seqno(),global_flows[ofid]->agg_seq_acked, global_flows[ofid]->running);
 		if ((global_flows[ofid]->agg_seq_acked>= global_flows[ofid]->final_seq) && global_flows[ofid]->running)
 		{	
 			// printf("RECIEVER:\tEarly termination of flow id: %i\n", ofid);
